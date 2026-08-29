@@ -69,6 +69,19 @@ columns:
     description: Protocol layer (dns/tcp/tls/http).
     checks:
       - name: not_null
+
+  - name: path_attribution_state
+    type: string
+    description: |
+      TD-95 Phase 0: whether this row's OONI reading is network-path-
+      confirmed or probe-vantage-point-only. Every row today reads
+      'VANTAGE_ONLY' -- CLIO attributes findings to Kenya from probe
+      location alone, with no cross-ASN concordance or out-of-country
+      vantage points to distinguish upstream/transit/destination-side
+      interference from in-country blocking (that data does not exist
+      yet; it is TD-95 Phases 1-3, not this column). This field exists
+      so the limitation is queryable, not to encode a distinction the
+      evidence cannot yet support.
 @bruin */
 
 WITH base AS (
@@ -131,6 +144,11 @@ SELECT
     -- pooled cross-test share (TD-49/TD-54).
     SAFE_DIVIDE(COUNTIF(is_blocking_signal), COUNT(*))
         AS blocking_signal_rate,
+
+    -- TD-95 Phase 0: no cross-ASN concordance or out-of-country vantage
+    -- points exist yet, so every row is uniformly vantage-point-only
+    -- today. Not a per-row heuristic -- see column description.
+    'VANTAGE_ONLY' AS path_attribution_state,
 
     'PRESSURE_ATTRIBUTION_V1' AS attribution_methodology_version,
     'pressure_attribution_ooni_daily_v1' AS reporting_version,
