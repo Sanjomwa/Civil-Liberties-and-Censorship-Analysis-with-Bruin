@@ -153,14 +153,14 @@
       "test_type": "whatsapp",
       "ooni_verdict": "OK",
       "failure_type": "none",
-      "last_sampled_at": "2026-08-30T13:10:01.924150+00:00",
+      "last_sampled_at": "2026-08-30T14:12:50.830757+00:00",
       "sampled_count": 10
     },
     "whatsapp|ANOMALOUS|none": {
       "test_type": "whatsapp",
       "ooni_verdict": "ANOMALOUS",
       "failure_type": "none",
-      "last_sampled_at": "2026-08-30T13:10:05.253814+00:00",
+      "last_sampled_at": "2026-08-30T14:12:53.473791+00:00",
       "sampled_count": 10
     },
     "psiphon|OK|none": {

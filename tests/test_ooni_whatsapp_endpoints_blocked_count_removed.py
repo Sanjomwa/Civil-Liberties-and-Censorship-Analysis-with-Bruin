@@ -26,6 +26,15 @@ whatsapp_endpoints_dns_inconsistent_count > 0 is removed alongside it as
 dead weight, not on its own merits: confirmed permanently 0/51,394 rows
 live, never populated by the probe.
 
+UPDATE (TD-126, 2026-08-30): the third surviving condition this file
+guards (registration_server_status = 'blocked') was itself repointed to
+whatsapp_registration_accessible IS FALSE -- see
+tests/test_ooni_whatsapp_registration_accessible_classification.py for
+that fix's own dedicated regression lock. This file's
+`test_whatsapp_orchain_surviving_conditions_unchanged` and
+`test_live_no_row_with_independent_driver_true_is_missing_anomalous` are
+updated in the same TD-126 build session to assert the new shape.
+
 THIS TEST EXISTS SPECIFICALLY TO STOP A FUTURE REFACTOR FROM SILENTLY
 REINTRODUCING EITHER CONDITION, THRESHOLDED OR OTHERWISE. If a future
 edit adds any severity-aware logic keyed on whatsapp_endpoints_blocked_
@@ -112,18 +121,25 @@ def test_whatsapp_endpoints_dns_inconsistent_count_removed_from_orchain():
 
 
 def test_whatsapp_orchain_surviving_conditions_unchanged():
+    """The two conditions this file's own fix (bug (b)'s removal) is
+    responsible for -- whatsapp_endpoints_status, whatsapp_web_accessible
+    -- must stay byte-for-byte unchanged. The third condition is no longer
+    checked verbatim here: TD-126 (2026-08-30) repointed it from the raw
+    registration_server_status field to whatsapp_registration_accessible
+    -- see test_ooni_whatsapp_registration_accessible_classification.py
+    for that fix's own dedicated regression lock."""
     sql = _normalized(VERDICTS_CANDIDATE_SQL)
     assert (
         "WHEN s.whatsapp_endpoints_status = 'blocked' "
         "OR s.whatsapp_web_accessible IS FALSE "
-        "OR s.registration_server_status = 'blocked' THEN TRUE"
+        "OR s.whatsapp_registration_accessible IS FALSE THEN TRUE"
         in sql
     ), (
-        "TD-105 build regression: the whatsapp OR-chain's surviving three "
-        "conditions (whatsapp_endpoints_status, whatsapp_web_accessible, "
-        "registration_server_status) have drifted from the exact shape "
-        "the build session shipped -- none of these three were meant to "
-        "change in this fix."
+        "TD-105/TD-126 regression: the whatsapp OR-chain's full text has "
+        "drifted from the current expected shape -- whatsapp_endpoints_"
+        "status and whatsapp_web_accessible (this file's own scope) must "
+        "stay byte-for-byte unchanged, and the third condition should "
+        "read whatsapp_registration_accessible IS FALSE (TD-126)."
     )
 
 
@@ -189,9 +205,13 @@ def test_live_reclassified_population_is_now_ok():
 @requires_bigquery
 def test_live_no_row_with_independent_driver_true_is_missing_anomalous():
     """Additive-proof regression guard: any whatsapp row where
-    endpoints_status/whatsapp_web_accessible/registration_server_status
-    independently indicate blocking must be ANOMALOUS, regardless of
-    blocked_count/dns_inconsistent_count."""
+    endpoints_status/whatsapp_web_accessible/whatsapp_registration_
+    accessible independently indicate blocking must be ANOMALOUS,
+    regardless of blocked_count/dns_inconsistent_count. Updated by TD-126
+    (2026-08-30): the third condition now reads whatsapp_registration_
+    accessible IS FALSE instead of the raw registration_server_status
+    field, which TD-126 confirmed is no longer exactly equivalent (2/278
+    rows genuinely diverge)."""
     from google.cloud import bigquery
 
     client = bigquery.Client(project=PROJECT_ID)
@@ -203,14 +223,14 @@ def test_live_no_row_with_independent_driver_true_is_missing_anomalous():
           AND (
             s.whatsapp_endpoints_status = 'blocked'
             OR s.whatsapp_web_accessible IS FALSE
-            OR s.registration_server_status = 'blocked'
+            OR s.whatsapp_registration_accessible IS FALSE
           )
           AND v.ooni_verdict != 'ANOMALOUS'
     """
     n = next(client.query(query).result()).n
     assert n == 0, (
-        f"TD-105 build additive-claim regression (live): {n} whatsapp "
-        "rows have a real, independent driver true but are NOT "
+        f"TD-105/TD-126 build additive-claim regression (live): {n} "
+        "whatsapp rows have a real, independent driver true but are NOT "
         "classified ANOMALOUS."
     )
 

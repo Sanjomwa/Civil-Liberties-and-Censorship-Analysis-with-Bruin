@@ -1,0 +1,55 @@
+{
+  "_comment": "TD-126 (2026-08-30) pinned panel for the whatsapp_registration_accessible fix. Same oracle-validity basis as TD-105's own whatsapp fixtures (tests/fixtures/ooni_whatsapp_web_accessible_classification/pinned_measurements.json, tests/fixtures/ooni_whatsapp_endpoints_blocked_count_removed/pinned_measurements.json): whatsapp has a valid, non-degenerate oracle (OONI's own /api/v1/measurements), so OONI's live classification is used as ground truth for every row here. Every entry below was independently re-fetched live from OONI's API during the TD-126 build session (2026-08-30), not copied from the characterization session's earlier fetch.",
+  "entries": [
+    {
+      "measurement_id": "971e03a0a776bc2f89b78adce98dd5abace013608e46953fb6282d0a3abfad6b",
+      "report_id": "20230912T102100Z_whatsapp_KE_33771_n1_6HkAxjsW13cxosXd",
+      "measurement_date": "2023-09-12",
+      "probe_asn": 33771,
+      "test_version": "0.9.0",
+      "before_fix_verdict": "ANOMALOUS",
+      "expected_ooni_verdict": "OK",
+      "note": "Reclassified: registration_server_status='blocked' (probe's own field) but registration_server_failure='http_request_failed' -- the actual $.requests[] entry for https://v.whatsapp.net/v2/register has failure=null and a real HTTP 503 response. Transport succeeded; only the probe's own higher-level status categorization disagreed. OONI's own live API confirms OK (anomaly=false) -- this is the exact measurement the TD-100/ADR-0013 agreement-check harness's rotating sample surfaced as a new disagreement on 2026-08-30, which triggered this fix's characterization."
+    },
+    {
+      "measurement_id": "5af5f8415c9518ebec453276a06b6521607fb21efadc8c50c9587d7ced3133c0",
+      "report_id": "20240524T153704Z_whatsapp_KE_33771_n1_Es7CtT09rk96K8ui",
+      "measurement_date": "2024-05-24",
+      "probe_asn": 33771,
+      "test_version": "0.9.0",
+      "before_fix_verdict": "ANOMALOUS",
+      "expected_ooni_verdict": "OK",
+      "note": "Second reclassified example, same shape as the first (registration_server_failure='http_request_failed', identical 403/400/503 raw HTTP status signature across all three requests, same probe_asn, 8 months apart) -- confirms the fix isn't specific to one moment in time. This is the entire live population of this shape as of 2026-08-30 (confirmed by parsing raw_test_keys.requests[] across all 278 registration_server_status='blocked' sole-driver rows, not sampling): exactly these 2 measurement_ids have a genuinely non-null v2/register request failure. OONI's own live API confirms OK (anomaly=false)."
+    },
+    {
+      "measurement_id": "b53a56726fcf4b89690bb33a722a594cea7a0c5ddca6e5ce13de160c40b3f8ca",
+      "report_id": "20240211T092643Z_whatsapp_KE_30844_n1_OSZZsH8NW16ZJTqh",
+      "measurement_date": "2024-02-11",
+      "probe_asn": 30844,
+      "test_version": "0.11.0",
+      "before_fix_verdict": "ANOMALOUS",
+      "expected_ooni_verdict": "ANOMALOUS",
+      "note": "Regression guard: registration_server_failure='connection_reset' -- the v2/register request's own failure field is genuinely non-null (a real transport-level failure, not an unexpected-but-received HTTP response). whatsapp_registration_accessible correctly stays FALSE, verdict stays ANOMALOUS. OONI's own live API confirms ANOMALOUS (anomaly=true). Proves the fix does not suppress the 276/278 rows with a real, matching transport failure."
+    },
+    {
+      "measurement_id": "f4f31ccb4ffbbd7415c1b9f7c6b9e467769c926b45e97c15828baa8c3ed83ad3",
+      "report_id": "20230924T111339Z_whatsapp_KE_15399_n1_8cUUfdrUeB2Xtb2M",
+      "measurement_date": "2023-09-24",
+      "probe_asn": 15399,
+      "test_version": "0.11.0",
+      "before_fix_verdict": "ANOMALOUS",
+      "expected_ooni_verdict": "ANOMALOUS",
+      "note": "Regression guard: whatsapp_web_accessible IS FALSE (bug (a)'s condition, a real HTTPS-leg failure), registration_server_status='ok' -- a different, untouched driver. Must stay ANOMALOUS via the web-check condition regardless of this fix. OONI's own live API confirms ANOMALOUS (anomaly=true). Proves this fix doesn't accidentally affect rows driven by a different OR-chain condition."
+    },
+    {
+      "measurement_id": "649abd21efbbc111f89a23fa1ef52208419ae11052fc7726279bc44ba521d8e1",
+      "report_id": "20230601T001302Z_whatsapp_KE_33771_n1_fJHQZJpzlyWQtoSc",
+      "measurement_date": "2023-06-01",
+      "probe_asn": 33771,
+      "test_version": "0.9.0",
+      "before_fix_verdict": "OK",
+      "expected_ooni_verdict": "OK",
+      "note": "Regression guard: already-OK row, no OR-chain condition true before or after (whatsapp_endpoints_status='ok', whatsapp_web_accessible=TRUE, registration_server_status='ok'). OONI's own live API confirms OK. Proves the fix does not touch rows never affected by registration_server_status in the first place."
+    }
+  ]
+}

@@ -171,6 +171,36 @@ lands entirely outside this window, elsewhere in 0.2.2's broader date
 range -- do not read the unchanged numbers above as evidence the
 rescoping had no effect. See reports.md's 2026-08-22 TD-102 rescoping
 session entry for the full account.
+
+RE-FROZEN (TD-126, 2026-08-30): `ooni_verdict_weekly`'s `whatsapp` values
+changed after int.ooni_measurement_verdicts_candidate.sql repointed the
+whatsapp OR-chain's third condition from the raw registration_server_
+status field to whatsapp_registration_accessible (stg.ooni_measurement_
+summary.sql) -- see that asset's header and
+tests/test_ooni_whatsapp_registration_accessible_classification.py for
+this fix's own static+live regression lock. `total_scored_measurements`
+is unchanged for every week (same TD-93/TD-101/TD-105 precedent: this
+fix only moves rows out of ANOMALOUS into OK, never into or out of the
+scored population). Exactly ONE week's `anomalous_count` moved, matching
+the fix's own fully-characterized population exactly: of the 2 total
+measurements this fix reclassifies project-wide (not a sample -- the
+entire live population of the http_request_failed shape, confirmed by
+parsing raw $.requests[] across all 278 registration_server_status=
+'blocked' sole-driver rows), one (2023-09-12) falls entirely outside
+this window and one (2024-05-24, measurement_id 5af5f8415c9518ebec453276
+a06b6521607fb21efadc8c50c9587d7ced3133c0) falls in the Saturday-anchored
+week starting 2024-05-18. Real delta, Finance Bill window (whatsapp
+anomalous_count, before -> after): 2024-05-18: 15->14 (-1). Every other
+week and every other test_name's numbers in this fixture are
+byte-for-byte unchanged, confirmed via a live requery of the full window
+before re-freezing, not assumed. This is a tiny, single-row delta by
+design -- the point of TD-126 is correctness/precedent (a raw,
+probe-submitted field OONI's own scorer explicitly disables, the same
+class of defect already fixed twice for this same test type), not a
+material change to the flagship 06-22 "Parliament stormed" week's signal
+(48 anomalous, entirely untouched by this fix). See reports.md's
+2026-08-30 TD-126 session entries (characterization and build) for the
+full methodology.
 """
 import json
 import os

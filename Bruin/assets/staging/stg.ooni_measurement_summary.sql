@@ -90,7 +90,29 @@ description: |
   repointed to the new column. See that asset's header and reports.md's
   2026-08-21 TD-105 entry for the full finding, including why bugs (b)
   (whatsapp_endpoints_blocked_count) and (c) (registration_server_status)
-  were investigated and deliberately left untouched here.
+  were investigated and deliberately left untouched at the time.
+
+  TD-126 (2026-08-30): added whatsapp_registration_accessible, the same
+  fix bug (c) above was flagged but never given -- a 2026-08-30
+  characterization session (read-only, then a same-day build session)
+  found registration_server_status shares TD-105 bug (a)/(b)'s exact
+  shape: OONI's own backend fastpath scorer explicitly disables reading
+  it, citing the same probe bug already cited for bug (b)
+  (ooni/probe-engine#341), and instead recomputes accessibility from
+  $.requests[]'s own https://v.whatsapp.net/v2/register entry's failure
+  field. Population is small and fully characterized (not estimated): of
+  278 registration_server_status='blocked' sole-driver rows, exactly 2
+  have a genuinely non-null request failure (both real, matching HTTP 503
+  responses from v.whatsapp.net -- transport succeeded, only the probe's
+  own higher-level status field disagrees); the other 276 have a real
+  transport failure and are unaffected, matching TD-105's own "89%
+  genuinely correct" figure for this field. registration_server_status/
+  registration_server_failure are left in place, untouched, for
+  diagnostic/backward-compatibility value -- same convention as
+  whatsapp_web_status/whatsapp_web_failure above; only int.ooni_
+  measurement_verdicts_candidate.sql's whatsapp arm is repointed to the
+  new column. See that asset's header and reports.md's 2026-08-30 TD-126
+  session entries (characterization and build) for the full account.
 
 depends:
   - stg.ooni_measurements
@@ -262,6 +284,43 @@ SELECT
     FROM UNNEST(JSON_EXTRACT_ARRAY(raw_test_keys, '$.requests')) AS elem
     WHERE JSON_VALUE(elem, '$.request.url') = 'https://web.whatsapp.com/'
   ) AS whatsapp_web_accessible,
+
+  -- TD-126 (2026-08-30): same pattern as whatsapp_web_accessible directly
+  -- above, applied to the registration-server check instead of the web
+  -- check. registration_server_status is the probe's OWN self-reported
+  -- field (probe-cli internal/experiment/whatsapp/whatsapp.go: defaults
+  -- to 'blocked', only flips to 'ok' if the probe's own higher-level
+  -- urlgetter Failure judgment is nil -- a different, higher layer than
+  -- the raw per-request failure field below). OONI's own backend fastpath
+  -- scorer (ooni/pipeline af/fastpath/fastpath/core.py,
+  -- score_measurement_whatsapp()) never reads registration_server_status
+  -- -- that whole family of raw probe-submitted fields is explicitly
+  -- commented out there, citing "Disabled due to bug in the probe
+  -- https://github.com/ooni/probe-engine/issues/341" -- the same bug
+  -- already cited to justify removing whatsapp_endpoints_blocked_count
+  -- (TD-105 build, 2026-08-22). OONI instead recomputes accessibility
+  -- straight from $.requests[]'s own https://v.whatsapp.net/v2/register
+  -- entry's failure field, ignoring the actual HTTP status code returned.
+  -- Confirmed live and by hand-reproducing OONI's own scorer logic
+  -- against real disagreeing measurements (TD-126 characterization
+  -- session, 2026-08-30): of the 278-row registration_server_status=
+  -- 'blocked' sole-driver population, exactly 2 rows have a genuinely
+  -- non-null raw request failure (transport succeeded -- both show a
+  -- real HTTP 503 from v.whatsapp.net/v2/register -- yet the probe's own
+  -- higher-level field still marks 'blocked'); the other 276 have a real,
+  -- matching transport failure and are unaffected by this column (TD-105's
+  -- own "89% genuinely correct" figure for this field holds -- this is a
+  -- narrow exception, not a broad recharacterization). Same null-handling
+  -- convention as whatsapp_web_accessible directly above: NULL if no
+  -- matching request entry exists (not observed live for this URL as of
+  -- this session, but not assumed impossible either), TRUE/FALSE from
+  -- LOGICAL_AND otherwise. See reports.md's 2026-08-30 TD-126 session
+  -- entries (characterization and build) for the full account.
+  (
+    SELECT LOGICAL_AND(JSON_VALUE(elem, '$.failure') IS NULL)
+    FROM UNNEST(JSON_EXTRACT_ARRAY(raw_test_keys, '$.requests')) AS elem
+    WHERE JSON_VALUE(elem, '$.request.url') = 'https://v.whatsapp.net/v2/register'
+  ) AS whatsapp_registration_accessible,
 
   -- telegram (ts-020-telegram.md) -- tcp/http blocking are real JSON
   -- booleans, confirmed live ("true"/"false" literals, not strings).

@@ -238,6 +238,29 @@ description: |
   2026-08-21 and 2026-08-22 TD-105 session entries (verification and
   build) for the full account.
 
+  TD-126 (2026-08-30, characterization then same-day build): whatsapp's
+  test_anomaly_flag arm's third disjunct now uses whatsapp_registration_
+  accessible (stg.ooni_measurement_summary.sql) in place of registration_
+  server_status = 'blocked' -- the fix bug (c) above was flagged for
+  (2026-08-21) but never given, until a 2026-08-30 characterization
+  session (triggered by the TD-100/ADR-0013 agreement-check harness
+  surfacing exactly this shape via its rotating sample) found it shares
+  bug (a)/(b)'s exact mechanism: OONI's own backend fastpath scorer
+  explicitly disables reading registration_server_status, citing the same
+  probe bug already cited for bug (b) (ooni/probe-engine#341), and
+  recomputes accessibility from $.requests[]'s own
+  https://v.whatsapp.net/v2/register entry's failure field instead. Of
+  278 registration_server_status='blocked' sole-driver rows, exactly 2
+  have a genuinely non-null request failure (both a real HTTP 503 from
+  v.whatsapp.net -- transport succeeded, only the probe's own
+  higher-level status field disagreed); the other 276 are unaffected,
+  consistent with the 89%-genuinely-correct figure already measured for
+  this field. See stg.ooni_measurement_summary.sql's own header and
+  reports.md's 2026-08-30 TD-126 session entries (characterization and
+  build) for the full account, including OONI's own scorer source
+  hand-applied to both affected measurements and confirmed to exactly
+  reproduce OONI's live OK answer.
+
   TD-102 (2026-08-22, characterization through build sessions):
   probe_accuracy_gate now also discards signal test_version=0.2.3 rows
   dated after OONI's own one-time November 2023 data-quality mutation
@@ -410,12 +433,13 @@ verdicts AS (
         -- removed the flawed plain-HTTP check entirely, so this
         -- recomputation only changes behavior for test_version=0.9.0 rows
         -- where the HTTPS leg actually succeeded. Two other conditions
-        -- investigated the same session and found NOT to share this
-        -- shape: registration_server_status (89% genuinely correct; a
-        -- small 2/562-row http_request_failed exception exists but is
-        -- separate and too small to fold in here), left untouched, and
-        -- whatsapp_endpoints_blocked_count > 0, investigated further and
-        -- REMOVED below -- see the TD-105 build note.
+        -- investigated the same session: registration_server_status (89%
+        -- genuinely correct at the time; a small 2/562-row
+        -- http_request_failed exception was flagged as too small to fold
+        -- in at the time) was left untouched here initially, then fixed
+        -- below by TD-126 once that exception was fully characterized;
+        -- whatsapp_endpoints_blocked_count > 0 was investigated further
+        -- and REMOVED below -- see the TD-105 build note.
         --
         -- TD-105 build (2026-08-22): whatsapp_endpoints_blocked_count > 0
         -- and whatsapp_endpoints_dns_inconsistent_count > 0 REMOVED from
@@ -450,9 +474,38 @@ verdicts AS (
         -- 0/51,394 rows live, never populated by the probe. See reports.md's
         -- 2026-08-21 and 2026-08-22 TD-105 session entries for the full
         -- account.
+        --
+        -- TD-126 (2026-08-30): registration_server_status = 'blocked'
+        -- replaced with whatsapp_registration_accessible IS FALSE -- the
+        -- fix bug (c) above was flagged (2026-08-21) but never given.
+        -- Same shape and same fix pattern as bug (a) directly above:
+        -- registration_server_status is the probe's OWN self-reported
+        -- field, and OONI's own backend scorer explicitly disables
+        -- reading it (same cited bug as bug (b), ooni/probe-engine#341).
+        -- whatsapp_registration_accessible (stg.ooni_measurement_
+        -- summary.sql) recomputes straight from $.requests[]'s own
+        -- https://v.whatsapp.net/v2/register entry instead, matching what
+        -- OONI's own backend actually does. Deliberately `IS FALSE`, not
+        -- `= FALSE` or a bare negation -- same inconclusive-not-blocked
+        -- NULL handling as whatsapp_web_accessible above (no matching
+        -- request entry not observed live for this URL, but not assumed
+        -- impossible). Population confirmed small and exact, not
+        -- estimated: of 278 registration_server_status='blocked'
+        -- sole-driver rows, exactly 2 have a genuinely non-null request
+        -- failure (both a real HTTP 503 from v.whatsapp.net/v2/register --
+        -- transport succeeded, only the probe's own higher-level status
+        -- field disagreed); the other 276 have a real, matching transport
+        -- failure and are unaffected by this change, consistent with the
+        -- 89%-genuinely-correct figure already measured for this field in
+        -- 2026-08-21. See reports.md's 2026-08-30 TD-126 session entries
+        -- (characterization and build) for the full account, including
+        -- OONI's own scorer source (ooni/pipeline's
+        -- score_measurement_whatsapp()) hand-applied to the two affected
+        -- measurements and confirmed to exactly reproduce OONI's live OK
+        -- answer.
         WHEN s.whatsapp_endpoints_status = 'blocked'
           OR s.whatsapp_web_accessible IS FALSE
-          OR s.registration_server_status = 'blocked' THEN TRUE
+          OR s.whatsapp_registration_accessible IS FALSE THEN TRUE
         ELSE FALSE
       END
       WHEN 'telegram' THEN CASE
