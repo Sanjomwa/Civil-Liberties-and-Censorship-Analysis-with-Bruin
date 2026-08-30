@@ -202,6 +202,17 @@ ROTATING_SAMPLE_MAX_CELLS = 20  # caps a monitor run near ~200 report_ids, ~3.5 
 STRATIFIED_PER_CELL = 25
 STRATIFIED_CATCHALL = 1000
 
+# TD-124: refresh-panel's dry-run cost sanity ceiling. int.ooni_measurement_
+# verdicts is ~234 MB/1.35M rows, unclustered/unpartitioned (confirmed live,
+# 2026-08-30) -- a measurement_id IN UNNEST(...) filter still bills a full
+# scan of the two selected columns (no row-level pruning without clustering),
+# which measured a few tens of MB in practice, nowhere near this ceiling.
+# This threshold exists to catch a genuinely wrong query shape (e.g. an
+# accidental join that pulls in raw_test_keys, the ~30 GiB column this
+# project already knows to avoid -- TD-58), not to model expected cost.
+REFRESH_SANITY_BYTES = 1024 ** 3  # 1 GiB
+USD_PER_TIB = 6.25
+
 EXIT_OK = 0
 EXIT_NEW_DISAGREEMENT = 1
 EXIT_PANEL_REGRESSION = 2
@@ -391,6 +402,23 @@ def sql_uniform_sample(project_id: str, test_type: str, limit: int) -> str:
     """
 
 
+def sql_refresh_verdicts(project_id: str) -> str:
+    """TD-124: the narrow, measurement_id-scoped query --mode refresh-panel
+    uses to re-derive CLIO's *current* verdict for a set of panel entries.
+    Deliberately selects only measurement_id/ooni_verdict from
+    int.ooni_measurement_verdicts -- never joins stg.ooni_measurements or
+    anything carrying raw_test_keys (the ~30 GiB column this project
+    already knows to avoid, TD-58). measurement_id is confirmed unique in
+    this table (1,354,848 rows == 1,354,848 distinct measurement_ids, live
+    2026-08-30), so it is a sufficient join/filter key alone -- no need for
+    the (report_id, input) compound key the OONI API side requires."""
+    return f"""
+      SELECT measurement_id, ooni_verdict
+      FROM `{project_id}.{VERDICT_TABLE}`
+      WHERE measurement_id IN UNNEST(@measurement_ids)
+    """
+
+
 def cell_params(test_type: str, ooni_verdict, failure_type: str) -> list:
     return [
         bigquery.ScalarQueryParameter("test_type", "STRING", test_type),
@@ -495,6 +523,132 @@ def sample_monitor(client, project_id, test_type, coverage_log) -> list:
     log.info("monitor: %d rotating-sample row(s) + %d panel row(s)",
               len(rotating_rows), len(panel_as_rows))
     return panel_as_rows + rotating_rows
+
+
+# --------------------------------------------------------------------------
+# TD-124: --mode refresh-panel -- a deliberate, human-triggered snapshot of
+# CLIO's *current* verdict for each panel entry, written to clio_verdict_now/
+# clio_verdict_refreshed_at/clio_verdict_source. This is the ONLY place this
+# script re-derives a panel entry's live CLIO verdict; check_panel() (below)
+# only ever compares two already-recorded fields (clio_verdict, the seed
+# lock, vs clio_verdict_now, this snapshot) and never queries BigQuery
+# itself -- the explicit, cost-conscious design the project owner asked for
+# instead of a live query on every monitor run.
+# --------------------------------------------------------------------------
+
+def refresh_panel(client: bigquery.Client, project_id: str, panel: dict,
+                   test_type: str | None, refresh_all: bool, dry_run: bool) -> int:
+    entries = panel.get("entries", [])
+    if refresh_all or not test_type:
+        scoped = entries
+        scope_desc = "all test types"
+    else:
+        scoped = [e for e in entries if e.get("test_name") == test_type]
+        scope_desc = f"test_type={test_type}"
+
+    if not scoped:
+        log.warning("refresh-panel: no panel entries match scope (%s) -- nothing to do", scope_desc)
+        return EXIT_OK
+
+    measurement_ids = sorted({e["measurement_id"] for e in scoped})
+    log.info("refresh-panel: scope=%s, %d panel entrie(s), %d unique measurement_id(s)",
+              scope_desc, len(scoped), len(measurement_ids))
+
+    sql = sql_refresh_verdicts(project_id)
+    params = [bigquery.ArrayQueryParameter("measurement_ids", "STRING", measurement_ids)]
+
+    dry_job = client.query(sql, job_config=bigquery.QueryJobConfig(
+        query_parameters=params, dry_run=True, use_query_cache=False))
+    est_bytes = dry_job.total_bytes_processed
+    est_cost = est_bytes / (1024 ** 4) * USD_PER_TIB
+    log.info("refresh-panel: dry-run cost estimate: %d bytes (~$%.6f at $%.2f/TiB)",
+              est_bytes, est_cost, USD_PER_TIB)
+
+    if est_bytes > REFRESH_SANITY_BYTES:
+        log.error(
+            "refresh-panel: estimated scan (%d bytes) exceeds the %d-byte sanity "
+            "ceiling for a measurement_id-scoped point lookup -- this suggests the "
+            "query is not as narrow as designed (e.g. an accidental join pulling in "
+            "raw_test_keys). Stopping before running for real; no BigQuery write, "
+            "no panel.json change.", est_bytes, REFRESH_SANITY_BYTES)
+        return EXIT_OPERATIONAL
+
+    if dry_run:
+        log.info("--dry-run: not running the real query, not writing panel.json.")
+        return EXIT_OK
+
+    # client.get_table() is a metadata-only call (REST tables.get), not a
+    # query job -- confirmed no query job is issued and no bytes are billed
+    # for this call (distinct from client.query(), used everywhere else in
+    # this script for anything billed).
+    table = client.get_table(f"{project_id}.{VERDICT_TABLE}")
+    table_modified = table.modified.isoformat()
+
+    job = client.query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params))
+    rows = {r["measurement_id"]: r["ooni_verdict"] for r in job.result()}
+    billed_bytes = job.total_bytes_billed
+    billed_cost = billed_bytes / (1024 ** 4) * USD_PER_TIB
+    log.info("refresh-panel: real query billed %d bytes (~$%.6f), %d/%d measurement_id(s) found live",
+              billed_bytes, billed_cost, len(rows), len(measurement_ids))
+
+    now = datetime.now(timezone.utc).isoformat()
+    regression_signals = []  # differs from the seed lock (clio_verdict) -- always logged
+    fresh_changes = []       # differs from the PREVIOUS clio_verdict_now -- drives the exit code
+
+    for e in scoped:
+        mid = e["measurement_id"]
+        prev_now = e.get("clio_verdict_now")
+        had_prior_refresh = e.get("clio_verdict_refreshed_at") is not None
+        new_now = rows.get(mid, "MISSING")
+
+        if new_now != e["clio_verdict"]:
+            regression_signals.append({
+                "measurement_id": mid, "test_name": e.get("test_name"),
+                "recorded_clio_verdict": e["clio_verdict"], "clio_verdict_now": new_now,
+            })
+            # A first-ever refresh has no prior clio_verdict_now to diff
+            # against, but a live disagreement with the seed lock on the
+            # very first refresh is still a real, actionable signal -- the
+            # seed lock itself is the only baseline available in that case.
+            if not had_prior_refresh:
+                fresh_changes.append({
+                    "measurement_id": mid, "test_name": e.get("test_name"),
+                    "previous_clio_verdict_now": None, "clio_verdict_now": new_now,
+                })
+
+        if had_prior_refresh and prev_now != new_now:
+            fresh_changes.append({
+                "measurement_id": mid, "test_name": e.get("test_name"),
+                "previous_clio_verdict_now": prev_now, "clio_verdict_now": new_now,
+            })
+
+        e["clio_verdict_now"] = new_now
+        e["clio_verdict_refreshed_at"] = now
+        e["clio_verdict_source"] = {"verdict_table_modified": table_modified}
+
+    save_json(PANEL_PATH, panel)
+    log.info("refresh-panel: wrote %d updated entrie(s) to %s", len(scoped), PANEL_PATH)
+
+    for r in regression_signals:
+        log.error(
+            "REGRESSION SIGNAL (vs. seed lock): measurement_id=%s test_name=%s "
+            "recorded clio_verdict=%s, clio_verdict_now=%s",
+            r["measurement_id"], r["test_name"], r["recorded_clio_verdict"], r["clio_verdict_now"],
+        )
+
+    if fresh_changes:
+        for c in fresh_changes:
+            log.error(
+                "NEW CHANGE since last refresh: measurement_id=%s test_name=%s "
+                "previous clio_verdict_now=%s, now=%s",
+                c["measurement_id"], c["test_name"], c["previous_clio_verdict_now"], c["clio_verdict_now"],
+            )
+        log.error("refresh-panel: %d entrie(s) changed since their last refresh -- see above.",
+                   len(fresh_changes))
+        return EXIT_PANEL_REGRESSION
+
+    log.info("refresh-panel: clean -- no entry changed since its last refresh.")
+    return EXIT_OK
 
 
 # --------------------------------------------------------------------------
@@ -808,20 +962,66 @@ def check_allowlist(disagreements: dict, allowlist: list) -> tuple:
 # panel check
 # --------------------------------------------------------------------------
 
-def check_panel(panel: dict, panel_results: list) -> tuple:
+def _is_entry_stale(entry: dict, verdict_table_modified: str | None) -> bool:
+    """TD-124: an entry's CLIO-side comparison is trustworthy only if it was
+    refreshed (via --mode refresh-panel) at or after the verdict table's own
+    last modification. Missing refresh fields entirely (schema v1 leftover,
+    or never refreshed) also count as stale -- there is nothing to compare
+    against. verdict_table_modified may be None if the caller couldn't fetch
+    it (treated conservatively as stale, never as a pass)."""
+    refreshed_at = entry.get("clio_verdict_refreshed_at")
+    source = entry.get("clio_verdict_source") or {}
+    entry_table_modified = source.get("verdict_table_modified")
+    if refreshed_at is None or entry_table_modified is None or verdict_table_modified is None:
+        return True
+    # Stale iff the verdict table has been modified more recently than this
+    # entry's own refresh snapshot was taken.
+    return datetime.fromisoformat(verdict_table_modified) > datetime.fromisoformat(entry_table_modified)
+
+
+def check_panel(panel: dict, panel_results: list, verdict_table_modified: str | None) -> tuple:
+    """TD-124: the CLIO-side comparison reads entry["clio_verdict_now"] (a
+    snapshot written by --mode refresh-panel) against entry["clio_verdict"]
+    (the immutable seed lock) -- it does NOT re-derive a live verdict here,
+    by explicit, cost-conscious design (see refresh_panel()'s own docstring).
+    A stale entry (never refreshed, or refreshed before the verdict table's
+    own last change) is reported as its own category, not silently compared
+    against outdated data. A MISSING clio_verdict_now (the measurement no
+    longer exists in the verdict table -- see refresh_panel()) is likewise
+    its own category, not folded into "regression" or passed over quietly.
+    The OONI-side drift check is unaffected: it still uses this run's own
+    live-fetched panel_results, exactly as before TD-124."""
     entries_by_id = {e["measurement_id"]: e for e in panel.get("entries", [])}
     regressions = []
     drifts = []
+    vanished = []
+    stale = []
     for pr in panel_results:
         entry = entries_by_id.get(pr["measurement_id"])
         if not entry:
             continue
-        if pr["clio_verdict_now"] != entry["clio_verdict"]:
-            regressions.append({
+
+        if _is_entry_stale(entry, verdict_table_modified):
+            stale.append({
                 "measurement_id": pr["measurement_id"],
-                "recorded_clio_verdict": entry["clio_verdict"],
-                "current_clio_verdict": pr["clio_verdict_now"],
+                "test_name": entry.get("test_name"),
+                "clio_verdict_refreshed_at": entry.get("clio_verdict_refreshed_at"),
             })
+        else:
+            clio_verdict_now = entry.get("clio_verdict_now")
+            if clio_verdict_now == "MISSING":
+                vanished.append({
+                    "measurement_id": pr["measurement_id"],
+                    "test_name": entry.get("test_name"),
+                    "recorded_clio_verdict": entry["clio_verdict"],
+                })
+            elif clio_verdict_now != entry["clio_verdict"]:
+                regressions.append({
+                    "measurement_id": pr["measurement_id"],
+                    "recorded_clio_verdict": entry["clio_verdict"],
+                    "current_clio_verdict": clio_verdict_now,
+                })
+
         recorded_ooni = ooni_label(
             bool(entry.get("ooni_anomaly")), bool(entry.get("ooni_confirmed")),
             bool(entry.get("ooni_failure")),
@@ -832,7 +1032,7 @@ def check_panel(panel: dict, panel_results: list) -> tuple:
                 "recorded_ooni_verdict": recorded_ooni,
                 "current_ooni_verdict": pr["ooni_verdict_now"],
             })
-    return regressions, drifts
+    return regressions, drifts, vanished, stale
 
 
 # --------------------------------------------------------------------------
@@ -964,20 +1164,33 @@ def parse_args() -> argparse.Namespace:
                     "classification for the same measurements, compare, and "
                     "flag new disagreement signatures or panel drift.",
     )
-    parser.add_argument("--test-type", required=True,
+    parser.add_argument("--test-type", default=None,
                         help="OONI test_name to check, e.g. signal, whatsapp, "
-                             "telegram, dnscheck, psiphon")
-    parser.add_argument("--mode", required=True, choices=["baseline", "monitor"])
+                             "telegram, dnscheck, psiphon. Required for "
+                             "--mode baseline/monitor. Optional for --mode "
+                             "refresh-panel (scopes the refresh to one test "
+                             "type; omit or pass --all to refresh every "
+                             "panel entry).")
+    parser.add_argument("--mode", required=True, choices=["baseline", "monitor", "refresh-panel"])
     parser.add_argument("--strategy", choices=["full", "stratified"], default="stratified",
-                        help="baseline mode only; ignored in monitor mode")
+                        help="baseline mode only; ignored in monitor/refresh-panel mode")
+    parser.add_argument("--all", action="store_true",
+                        help="refresh-panel mode only: refresh every panel entry "
+                             "regardless of test type (also the default when "
+                             "--test-type is omitted in this mode)")
     parser.add_argument(
         "--project-id",
         default=os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT_ID"),
     )
     parser.add_argument("--dry-run", action="store_true",
-                        help="show what would be sampled/fetched; no OONI API "
-                             "calls, no BigQuery writes")
-    return parser.parse_args()
+                        help="baseline/monitor: show what would be sampled/fetched, "
+                             "no OONI API calls, no BigQuery writes. refresh-panel: "
+                             "run the BigQuery dry-run cost estimate only, no real "
+                             "query, no panel.json write.")
+    args = parser.parse_args()
+    if args.mode in ("baseline", "monitor") and not args.test_type:
+        parser.error("--test-type is required for --mode baseline/monitor")
+    return args
 
 
 def main() -> int:
@@ -986,11 +1199,14 @@ def main() -> int:
         log.error("no project id: pass --project-id or set GOOGLE_CLOUD_PROJECT")
         return EXIT_OPERATIONAL
 
-    mapping = load_yaml(MAPPING_PATH)
     panel = load_json(PANEL_PATH)
-    coverage_log = load_json(COVERAGE_LOG_PATH) if args.mode == "monitor" else {"cells": {}}
-
     client = bq_client(args.project_id)
+
+    if args.mode == "refresh-panel":
+        return refresh_panel(client, args.project_id, panel, args.test_type, args.all, args.dry_run)
+
+    mapping = load_yaml(MAPPING_PATH)
+    coverage_log = load_json(COVERAGE_LOG_PATH) if args.mode == "monitor" else {"cells": {}}
 
     strategy = args.strategy if args.mode == "baseline" else None
     if args.mode == "baseline":
@@ -1019,7 +1235,14 @@ def main() -> int:
     result = compare(sample_rows, fetched, mapping, args.test_type)
     allowlist = load_allowlist()
     new_disagreements, allowlisted = check_allowlist(result["disagreements"], allowlist)
-    regressions, drifts = check_panel(panel, result["panel_results"])
+
+    # TD-124: free metadata call (REST tables.get, no query job, no bytes
+    # billed -- distinct from every client.query() call in this script),
+    # fetched fresh on every run so check_panel()'s staleness gate always
+    # compares against the table's real current state, not a cached value.
+    verdict_table = client.get_table(f"{args.project_id}.{VERDICT_TABLE}")
+    verdict_table_modified = verdict_table.modified.isoformat()
+    regressions, drifts, vanished, stale = check_panel(panel, result["panel_results"], verdict_table_modified)
 
     # TD-101 Task 1: backfill allowlist_hit on the per-row findings now that
     # the allowlist check has run (compare() itself doesn't see the
@@ -1037,8 +1260,15 @@ def main() -> int:
     panel_entries_for_type = [e for e in panel.get("entries", []) if e.get("test_name") == args.test_type]
     if not panel_entries_for_type:
         panel_status = "EMPTY"
+    elif stale:
+        # TD-124: a stale CLIO-side snapshot suppresses trusting REGRESSION/
+        # VANISHED for those entries -- highest precedence after EMPTY,
+        # same reasoning as INCONCLUSIVE suppressing everything below it.
+        panel_status = "STALE"
     elif regressions:
         panel_status = "REGRESSION"
+    elif vanished:
+        panel_status = "VANISHED"
     elif drifts:
         panel_status = "EXTERNAL_DRIFT"
     else:
@@ -1064,15 +1294,33 @@ def main() -> int:
         log.info("ALLOWLISTED [%s] (x%d): %s", entry.get("td_ref"), entry_count, entry.get("reason"))
     for r in regressions:
         log.error("PANEL REGRESSION (CLIO-side): %s", r)
+    for v in vanished:
+        log.error("PANEL ENTRY VANISHED (measurement no longer in verdict table): %s", v)
     for d in drifts:
         log.warning("PANEL EXTERNAL DRIFT (OONI-side): %s", d)
+    for s in stale:
+        log.warning(
+            "PANEL ENTRY STALE (CLIO-side check not trusted -- panel verdicts "
+            "stale relative to the verdict table, refresh before trusting this "
+            "result): %s", s,
+        )
+
+    # TD-124: a stale panel snapshot is folded into the same INCONCLUSIVE
+    # signal as a high fetch-error-rate -- both mean "the result below is
+    # not trustworthy," and INCONCLUSIVE already has top precedence.
+    inconclusive = inconclusive or bool(stale)
 
     if inconclusive:
         exit_code = EXIT_INCONCLUSIVE
-        log.error("INCONCLUSIVE: fetch error rate %.1f%% exceeds the %.0f%% "
-                  "threshold -- results below are not trusted.",
-                  error_rate * 100, INCONCLUSIVE_ERROR_RATE * 100)
-    elif regressions:
+        if error_rate > INCONCLUSIVE_ERROR_RATE:
+            log.error("INCONCLUSIVE: fetch error rate %.1f%% exceeds the %.0f%% "
+                      "threshold -- results below are not trusted.",
+                      error_rate * 100, INCONCLUSIVE_ERROR_RATE * 100)
+        if stale:
+            log.error("INCONCLUSIVE: %d panel entrie(s) are stale (see PANEL ENTRY "
+                      "STALE above) -- run --mode refresh-panel before trusting the "
+                      "CLIO-side panel result.", len(stale))
+    elif regressions or vanished:
         exit_code = EXIT_PANEL_REGRESSION
     elif new_disagreements:
         exit_code = EXIT_NEW_DISAGREEMENT

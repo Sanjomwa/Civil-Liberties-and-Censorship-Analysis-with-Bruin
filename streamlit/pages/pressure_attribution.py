@@ -435,7 +435,9 @@ else:
         "(TD-49/TD-54): dnscheck's high-volume, structurally zero-signal "
         "rows (TD-55) stay in their own row and cannot dilute app-specific "
         "rates. Confidence bands per marts.dim_censorship_confidence "
-        "(ADR-0001)."
+        "(ADR-0001). These are OONI vantage-point signals: observed as "
+        "unreachable from a Kenyan probe, not a confirmed claim about "
+        "where in the network path the interference occurs (TD-95)."
     )
 
 st.divider()

@@ -1088,6 +1088,7 @@ def get_ooni_corroboration(measurement_date):
             medium_confidence_events,
             low_confidence_events,
             blocking_signal_rate,
+            path_attribution_state,
             reporting_version,
             snapshot_at
         FROM `{REPORTING}.mart_pressure_attribution_ooni_daily`
@@ -1109,6 +1110,7 @@ def get_ooni_corroboration(measurement_date):
             "medium_confidence_events",
             "low_confidence_events",
             "blocking_signal_rate",
+            "path_attribution_state",
             "reporting_version",
             "snapshot_at",
         ],
@@ -1123,6 +1125,7 @@ def get_ooni_corroboration(measurement_date):
             "medium_confidence_events": "numeric",
             "low_confidence_events": "numeric",
             "blocking_signal_rate": "numeric",
+            "path_attribution_state": "string",
             "reporting_version": "string",
             "snapshot_at": "datetime",
         },

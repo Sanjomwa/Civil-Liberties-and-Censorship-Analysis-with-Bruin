@@ -1,5 +1,2310 @@
 {
-  "_comment": "Fixed monitor-mode panel, TD-100/ADR-0013 steps 1-4. Deliberately empty in this session -- populated by the later baseline sessions (whatsapp/telegram/dnscheck), which is separate, later relay-prompt scope. Each entry pins one measurement (report_id, and input for multi-input tests) together with CLIO's verdict and OONI's real answer AT THE TIME IT WAS ADDED to the panel, so a later monitor run can tell apart a CLIO-side regression (clio_verdict changed since the entry was recorded) from external drift (ooni's own answer changed) on the exact same measurement, rather than lumping both under one alarm.",
-  "schema_version": 1,
-  "entries": []
+  "_comment": "Fixed monitor-mode panel, TD-100/ADR-0013 steps 1-4 build, populated across two sessions (2026-08-30, the second recovering from a power-interrupted first). Each entry pins one measurement (report_id, and input for multi-input tests) together with CLIO's verdict and OONI's real answer AT THE TIME IT WAS ADDED to the panel, so a later monitor run can tell apart a CLIO-side regression (clio_verdict changed since the entry was recorded) from external drift (ooni's own answer changed) on the exact same measurement, rather than lumping both under one alarm. Both CLIO's clio_verdict and OONI's booleans were re-verified live/fresh at seeding time, not copied from older audit rows -- see reports.md for why that mattered (a stale FAILED-verdict signal population turned out to have been superseded by TD-102's later discard fix). dnscheck is deliberately excluded (DEGENERATE-EXEMPT, TD-103: OONI's own anomaly/confirmed/failure fields show zero variance for dnscheck). psiphon's population is OK-only by construction, not by sampling shortfall: every non-OK (FAILED) psiphon candidate sampled disagreed with OONI's own ANOMALOUS answer (93/103, ~90%) -- a real, separate, unresolved finding reported in reports.md, not a panel-seeding gap. signal/whatsapp/telegram have no live FAILED or CONFIRMED verdicts in Kenya's current data (confirmed via a live GROUP BY before seeding) -- OK/ANOMALOUS is the full available diversity today. TD-68 (uptime.signal.org canary -- the relay prompt that requested this work called it 'TD-71', which is actually a different, unrelated TLS-evidence-tiering item; see reports.md for the correction) IS seeded below: it lives under test_name=signal, not dnscheck, so DEGENERATE-EXEMPT does not apply to it -- one live, still-canary-tagged, post-fix measurement (OK/OK agreement) is pinned as entry #144, seeded as the BEST AVAILABLE fixture, not a working regression lock: check_panel() compares a panel row's stored clio_verdict against itself (never re-queries BigQuery for a fresh verdict, confirmed by tracing what would happen if this exact measurement regressed), so this entry today only monitors OONI-side drift on this measurement, not the CLIO-side misclassification TD-68 actually was. TD-93 (whispersystems/signal_legacy_nxdomain) is NOT seeded, for a stronger reason than check_panel()'s limitation: the 5,792 live measurements still carrying signal_legacy_endpoint_nxdomain_only=TRUE all resolve to ooni_verdict IS NULL in int.ooni_measurement_verdicts (CLIO deliberately excludes them from classification post-TD-102-fix) -- there is nothing live to pin at all, not even in this limited form. See reports.md for the full evidence and the recommendation both be revisited if the harness's regression-check logic is ever extended to re-query CLIO's live verdict. SCHEMA v2 (TD-124): three new fields added to every entry -- clio_verdict_now, clio_verdict_refreshed_at, clio_verdict_source (all null until the first `--mode refresh-panel` run populates them). `clio_verdict` above is the permanent seed lock and must never be overwritten by a refresh -- it is the fixed known-answer this panel exists to protect. `clio_verdict_now` is a periodically-refreshed snapshot of CLIO's live verdict for the same measurement_id, written only by `--mode refresh-panel` (a narrow, measurement_id-scoped BigQuery query against int.ooni_measurement_verdicts, never joined to raw_test_keys). check_panel() compares clio_verdict against clio_verdict_now to detect a real CLIO-side regression, gated on clio_verdict_source.verdict_table_modified not being older than the table's current `modified` metadata (a staleness check, since refresh is a deliberate, human-triggered snapshot, not a live query on every monitor run -- TD-124, see reports.md). A legitimate, deliberate change to what 'correct' means for an entry must be made by editing clio_verdict itself with a TD reference in the commit message -- never by letting a routine refresh silently redefine the lock.",
+  "schema_version": 2,
+  "entries": [
+    {
+      "test_name": "signal",
+      "measurement_id": "e2563e92409e58a7befdffa6e149e93daf56caff77dc420ace63bd1bc9a006e4",
+      "report_id": "20250115T065415Z_signal_KE_37061_n1_blwQAT7bKaB4EiKk",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "f08af03e0a3e8235816660a0f22ae0ec23eb3fcabdea95894d2719e340f96653",
+      "report_id": "20241119T202718Z_signal_KE_15808_n1_rujnOPOjRam0yMw9",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "e9174d63769312869867e917ca7869bbaa63d001a7d2c8590cfe3243cb1b695a",
+      "report_id": "20241115T164126Z_signal_KE_37061_n1_gxd1gznMO6ig3Ueb",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "28f051a2f046939c44469c53cbd7c1d7fc14a75677131d6b8f76961c519d9f5f",
+      "report_id": "20241128T015105Z_signal_KE_37061_n1_FVruTTArTdqFbL38",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "8dbbe6ca2cc2bb48dd1b5886e011f889d2757a3535a985cce69b20ebdc2235c5",
+      "report_id": "20240511T012512Z_signal_KE_328856_n1_oKxjGHxtnZ3I3Dbd",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "faa4f7c7506d48c034bded1747b2cb5beb7c2d58506ff14f6cfee32c7cd03b2a",
+      "report_id": "20250103T145059Z_signal_KE_37061_n1_mKgZbTsTjYSVS6mg",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "d9fb47ed4298c40560935c9dec15f435de5928d22c881708edbe97342b8f9049",
+      "report_id": "20241112T002535Z_signal_KE_15399_n1_dgL3cFBoOLJKNQmN",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "5874da1c8930224c882b4c9cc19563db6c0f027616fbc11a91bcb378cfb32863",
+      "report_id": "20230820T225322Z_signal_KE_33771_n1_5wdYWqFNnRa6OfKV",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "079769011b70ba836fa38e3fcd63fe71326151da2390bb13d94ff81a248389f3",
+      "report_id": "20250107T190111Z_signal_KE_37061_n1_gMtXyaQSxlPzjcNP",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "9a9b2e528116bfb9a65106e6357f035a9d2502f531058cc1c24ecf92dda83284",
+      "report_id": "20240629T175153Z_signal_KE_33771_n1_rdVIoK1qNoH4mzvo",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "34c1f09da4fe62e91a299e4df3617ca3fac317504bb78cb0962715b45ff0c95a",
+      "report_id": "20240708T083516Z_signal_KE_33771_n1_1ykE5xH3Tn4Y915k",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "8120a3c51c5719f16bb3eecb60270fc842e10c98e4775d3a6150510786b716e6",
+      "report_id": "20240612T191228Z_signal_KE_37100_n1_Koj9WyQtlilRHoSs",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "a9525ee6ead0726977c90251838a2d37c2470a2c005e0765e457c28c86d287dd",
+      "report_id": "20241010T122821Z_signal_KE_14593_n1_kcb7zHUHdZLOm9wh",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "b300f0ff309b120f20aa1f4236ae01861ee061403db47623d78d69ae528d6745",
+      "report_id": "20241201T151104Z_signal_KE_33771_n1_sVxJlMM7P9LTklzs",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "3bb16a6abda7971ddb0540e2d23ebf6346efbdf9b976dde6f25206af5b281626",
+      "report_id": "20240908T181254Z_signal_KE_33771_n1_C8xTkBJpfRY3sdmi",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "854855a35f6568553abd755f99f9cef5cbeaaaa5b3e94078b8a9ad8dbdea94e2",
+      "report_id": "20241101T173207Z_signal_KE_33771_n1_KpJjpoSIElm4I31R",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "d15bae7c7549bed33681e9a63b09395dbbc8056bad8a2350fe3ba67cbac7c63d",
+      "report_id": "20250430T075336Z_signal_KE_37061_n1_NBKhnlytxBgUjdFU",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "53eea6d748bb7bf6e9defe53340e01f3703e5905d96c2bf18423228c9d033f5f",
+      "report_id": "20240620T132052Z_signal_KE_33771_n1_tEMjIpUo2XhTYXoD",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "f36b53f73855289d50ce312cfbb5fdd7a5a1547a22a21b395058f433a2ee150d",
+      "report_id": "20250305T145614Z_signal_KE_329387_n1_ByIjcTArUKEnSu1q",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "7a0a44359dfa3d5694b16c20b3c412541eefa317f3dff87c71cd0ff6df56af65",
+      "report_id": "20240202T113103Z_signal_KE_328856_n1_AnUvq0kTSBDxsVvZ",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "03dba0d7f8c139ab876a752c59b42880734494c5a7b43c1f64c24d78ad01dd1c",
+      "report_id": "20240106T171429Z_signal_KE_328856_n1_po7HywpjJvvvPiUQ",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "3f11f131abfd0c361fc566c00d6804a94e6652a160ef66deaab4b7e5a65cae9e",
+      "report_id": "20240920T012219Z_signal_KE_329044_n1_J6JkUmC2hn1oMGk0",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "8ab97f1dce6fbbc5e1dc4b713794d4e7294f72d1ff5c5b10f8576b5b4bfdd0b9",
+      "report_id": "20231223T051658Z_signal_KE_329211_n1_ZxtoxoPSLPRa8AXi",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "2bca0bdbbeda93cb774340936bac12f180ffca49dde7ef51a09e0e0f89631eea",
+      "report_id": "20240114T213938Z_signal_KE_15399_n1_IGzMWLSrMzkk9xsP",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "7a8f3f6246b1da3b57a8bc912c58276c95ec8100f80b1af8da4710ad56a08f06",
+      "report_id": "20240203T093838Z_signal_KE_328856_n1_OADrEfoqYUb2oWoZ",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "a4c38a2642e4f78602de9ea22946851738d455524522ddce0975cc573aec9d77",
+      "report_id": "20240118T035320Z_signal_KE_36866_n1_6jbVjrZo6P4Ey9Id",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "7b4e69d63206ac0ab265413c52c435c45d150a8e240f38cc8cc51caeff3afb7b",
+      "report_id": "20231227T080316Z_signal_KE_33771_n1_5bzMMR4QOo9FB6L9",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "d5caad9e47ab56343b10311b4fb108f26baab7d5e46f031cc3521bcc3a3f21e7",
+      "report_id": "20240917T004604Z_signal_KE_328856_n1_MoqiTUTniVjrwruk",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "1c1aa22f6a48df0a6a3a4ae7521b3a1cfe24c6f8e6a2f55eebee171314ea5933",
+      "report_id": "20250608T111237Z_signal_KE_37061_n1_c8A8coKpkYJbIcMn",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "dfb597c1e6612945c632f441f8e7acd91ae94592b03d8ac7b008ea318dc5792d",
+      "report_id": "20240205T070358Z_signal_KE_328856_n1_CGAiNmAjcAOMz911",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "6cdc189d1959cbcbc6c5a77db8775003afcfbee47efc2c276e1504228ecd4257",
+      "report_id": "20240123T223247Z_signal_KE_329014_n1_1NmIpTqN1nyldXPm",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "54feeaf047d4dab59e8194454447ec6a2ed22101f81234d6a5ba33bd5b0009df",
+      "report_id": "20231231T192509Z_signal_KE_328856_n1_BOjh4XebiyU2NN5V",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "689c27a3dea794b8759f180e54381d144e74fa926a4d6d8eb8c7e260db06fa18",
+      "report_id": "20231029T200125Z_signal_KE_12455_n1_7LAFsBLik9N3tYEN",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "4044e88976a06a2a8d57ad500fd1de76dbcea8252756961e536d0e5467b33aed",
+      "report_id": "20240920T070741Z_signal_KE_14593_n1_YDQg0bWjPsjFHE2e",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "7c13aed13d17d8901e54c4d28fa8dbffb5de407fc712f2b408f0e591c1ef76f4",
+      "report_id": "20240715T081326Z_signal_KE_37100_n1_6FcPTIdq4IyajCf8",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "c3ac8dc1a96a4ec076848b65a0506b91ba46ace6e2576d2b10ae04968dd0320f",
+      "report_id": "20231225T093427Z_signal_KE_33771_n1_qNk2OcTaKoUsbnsz",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "203a4a6257cf3abe8eca44e65da5101bc0e02a8cc156fc9b1643daed9c1fa958",
+      "report_id": "20240801T085825Z_whatsapp_KE_37061_n1_U0s7kdbqp8E94dPn",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "3d8a274c9f4721127a8dfa1e2f9c90aff2c08fbb2a10b71ab7adf6d06f55e2f9",
+      "report_id": "20240719T134139Z_whatsapp_KE_12455_n1_xT6nxKKqjHgGKdmL",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "271014ccc06b38f357af2dd4073909e45a43f2b0a3efeb3d6a14ac9d1d0edc1f",
+      "report_id": "20250530T074456Z_whatsapp_KE_37061_n1_5fEpA87pwivoOkWg",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "b40c5712a3ec2c97b1405aea96f5edcb7c1ede2701307a9cda673b2f32763c99",
+      "report_id": "20240524T115039Z_whatsapp_KE_33771_n1_B0wY1mmm9yq2VpqF",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "12ee956bf2caefc0dad4f97735c18fbafd0fff4b6e3b6d244d520a3a0ecf90f2",
+      "report_id": "20241031T035304Z_whatsapp_KE_329211_n1_QWSthRfYvzhPOC39",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "3f0d56812bda79aa6f24a5e887f0210a4647f497577d4093b3daafc1a2d6d7fb",
+      "report_id": "20241023T035914Z_whatsapp_KE_37061_n1_s9BqOO12O3Pa5oYX",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "4d4d8267e3a9b31d60e75dccd4d179d2f381a94973d604352af3d8e1161e7bfe",
+      "report_id": "20250616T051433Z_whatsapp_KE_36926_n1_1dH1SQdCkxyK6df3",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "7d4d7b5b7dd9987d6e44666aa9fde1d3d3a5e773d646c08192c2e0af512c3971",
+      "report_id": "20231204T051152Z_whatsapp_KE_36866_n1_qnIHza7LsI9nPNwI",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "c41a74f813bbda8c9172e9b193899bd3c38c5e4737f44ef72d6dee66bc0f611f",
+      "report_id": "20250522T190904Z_whatsapp_KE_36866_n1_TVOMTyCkyPU9vbNh",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "75a127275fd3ce4c0e75bfe1875116d07868698c28801b4b47c0e3d84f28c1d8",
+      "report_id": "20240509T180728Z_whatsapp_KE_12455_n1_wS1ra8WF6GhHuo1f",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "b89ca4b1f8e0d2f0f5c6f6df09150c5c7617f6a019afabb8736e802de1fd2d5d",
+      "report_id": "20230912T011333Z_whatsapp_KE_33771_n1_oZeSTN1SKikvASr4",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "d1a611b744c857533be71e394e7f36c85d27fb8b28b3653c0fbec1c1a51c0715",
+      "report_id": "20250124T045237Z_whatsapp_KE_37061_n1_2s9kXmfRkFsE9u7s",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "ec7e777253c2fed37287b92c0c593dd325e249d1cafaaee4799c59251ae10f05",
+      "report_id": "20250314T114458Z_whatsapp_KE_37061_n1_xYO6amFpV2TFH4Mc",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "cc401307b58c21dd940c298336071560fe40cc36ffe419f2abd9950b3fbd5ef0",
+      "report_id": "20240918T220134Z_whatsapp_KE_328856_n1_FASGBOo6m8oMdnql",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "9f23e88c18ddf79a4e004090dbacffff4236130569b6999a0a779090ff2d801f",
+      "report_id": "20240402T164554Z_whatsapp_KE_37061_n1_bhKyD1ooHISpZkoX",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "799de042c6dfff8f2c73b044318124fa7f5bfe568db5cf52ba60c436a99f9ca0",
+      "report_id": "20240806T153858Z_whatsapp_KE_37100_n1_OEKD0SNXtAu0UsXo",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "1fe7145a42b6a9d43e08d9927ecc033a6e3a134692ce175c6ad15ba1f2ca75cc",
+      "report_id": "20240227T053645Z_whatsapp_KE_33771_n1_LzwJP8hb1FR4Wqd0",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "3cccefabb54db8239249c6a5a204781540a3d0d8486f088c904f40f5ea320422",
+      "report_id": "20240330T090609Z_whatsapp_KE_33771_n1_ZopesP55osxoyl4M",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "53417c86c9ffc11aca4f4b4ca045cea38ddd1d3a8e105b82ac9762bf4bc78e76",
+      "report_id": "20250328T114805Z_whatsapp_KE_12455_n1_mobxnr1TTY8CuwJy",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "c29340986535be0fe3608ff490f740affc9c278dae60ed35a44f0c5f388d1de9",
+      "report_id": "20240927T011201Z_whatsapp_KE_329044_n1_FTEUGG00Yi7CrX7X",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "2c748662802777042c6830b44237556114651bc98824e5419e1a61dc5349857c",
+      "report_id": "20241005T110029Z_whatsapp_KE_37061_n1_YMGuj7Oe22QpJvM1",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "8a1ee0b87517922ea41481ec24283a4d6e3e91c803c321311a81a03d86243496",
+      "report_id": "20250512T061349Z_whatsapp_KE_33771_n1_KMsJpkQGwdNmgJyo",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "3d91f4e17840de33ce758a19c6a46c6869c84250615b5d1c98f07218eb183ac6",
+      "report_id": "20250402T143842Z_whatsapp_KE_36926_n1_Z3cmTut0eGiuTozI",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "104568a8a42185f38c4e7d368900ab91fd82aacfcc6cd226d5d102859b2a224f",
+      "report_id": "20240913T072831Z_whatsapp_KE_36866_n1_2yzZ1QnOKFfpKsIa",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "d4167470a48a3c10adf249ee116c1a5c9209f4b826ae75514a48e834d6993361",
+      "report_id": "20240826T015200Z_whatsapp_KE_329044_n1_qap2KmU2sABmbDb2",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "6dafc85814b3532bb51813b67eb237692f22b95c2049e33747808f759e5e7132",
+      "report_id": "20240514T133838Z_whatsapp_KE_33771_n1_oEisNy5OuY3EPQpS",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "95db325037868595b34e93a39e545570b7e7cd8b9717c0e577b14f91daa1df02",
+      "report_id": "20240905T020416Z_whatsapp_KE_329044_n1_JOcMYZD0T8ImbABs",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "d52a49502afceb4e729d7520a76017322c8793752da383218c1322284779e41d",
+      "report_id": "20240905T043215Z_whatsapp_KE_329044_n1_r6GocVH5klIw7fc6",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "3472d3a6f7386720f994689dc20d4c17d7e315f6d384f1d7841f33df3f5448ed",
+      "report_id": "20240318T210519Z_whatsapp_KE_33771_n1_QkaGyFDBboXNwq8H",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "1665d07d7d9b20e1fa23f41770a279b0c71e524ade841da7630e2b1004ba07b1",
+      "report_id": "20240919T000738Z_whatsapp_KE_329044_n1_3GBNhjVBF2z38pba",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "72b2da5ff7df05eec12ad78eff3a4bcb34520e4c012be69a893dde3f926a53b8",
+      "report_id": "20240124T110156Z_whatsapp_KE_33771_n1_wfEcp2T2y525jEMu",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "3561ac3c8eb287c2cc89a902614814948565ae09d6739b32cc40d286c996c69d",
+      "report_id": "20240926T003445Z_whatsapp_KE_329044_n1_ccQsoof0YgS5QqQI",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "3db99c52566c10d77b808ff0d815f5fb63355b676a385dada64ada2d53e11431",
+      "report_id": "20241218T103928Z_whatsapp_KE_15399_n1_sI8IB5j0UGF0f0on",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "181b49e0850ad297ae71c2605d4509ea64d57c5c460b2c20e7ae2e05fd2783de",
+      "report_id": "20230802T174837Z_whatsapp_KE_33771_n1_aKAUHDURb2YXpT5x",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "c1a76251a7b6a60e021847c5f4e0f66c9d234bd7c3956fbc826a168978f2a15b",
+      "report_id": "20240429T183817Z_whatsapp_KE_37061_n1_f3a78gwyaicH2Ajn",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "whatsapp",
+      "measurement_id": "0d7dc00e30b78320699f9e5c3370957d4c923df04bccdad19433317ed31f1e4e",
+      "report_id": "20240726T180451Z_whatsapp_KE_37061_n1_hl2dj9JWf6YhuMWJ",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "cc31c596d300d88f1dc2f68962e4b7e62a68eb663d06b2f90c504f77038ae70b",
+      "report_id": "20240725T012028Z_telegram_KE_33771_n1_jW2QBG8F9H396JIi",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "5cab55ac90bbb19e236a5c0f88183ecaf9f92d48cda8a4af9b54c836fa8a5524",
+      "report_id": "20241229T075051Z_telegram_KE_37061_n1_4ZH3hKzNjelF0eAA",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "af53a4c8eefa82bafce84e7a8f5e879a4ed704f3bcbaa910873b5defb6686ce9",
+      "report_id": "20240329T001655Z_telegram_KE_33771_n1_uDhouj4ANExsIBMA",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "b97e8d8a67f5abc49ac122066aa6ce6d0d8828c751d365cb985e8093fb0cd80f",
+      "report_id": "20241124T225101Z_telegram_KE_37061_n1_bjXfkWS1ogJ4o6En",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "c46d00016defe9903efca41d8b29f6ba1096e2274805539e70e6f8c3d05d1664",
+      "report_id": "20250317T104006Z_telegram_KE_33771_n1_tTosjOvfoYF74hmH",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "58239d00e07b05249e8718e641397d4f52dc6f266b17c6eb4dfe9ca3853aacf8",
+      "report_id": "20240731T162729Z_telegram_KE_33771_n1_A0f0E576M2E8zIOZ",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "afe9c7f87e4e8e02f150f374f51621092d8b3f0af3599c19fe58f7f2816bf7e5",
+      "report_id": "20231105T042536Z_telegram_KE_329014_n1_MZdcVfQR5I020Dus",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "ac16fd0ca3746c0bbe0001d7342f6f03df493e476b41b11a2f8ac656d86638fc",
+      "report_id": "20250225T133859Z_telegram_KE_37061_n1_pieL1cboJs7P8sSr",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "40569586584e9d8eb02bedb4fd96e9c006ed507a0bbfe5aeea843481df2cf72d",
+      "report_id": "20240502T124153Z_telegram_KE_30844_n1_c68tEYeh8yQUwlPh",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "3e82e235555a6a69ad7701753db6427836b853c94661c56f89b609d583ab73ab",
+      "report_id": "20240804T100427Z_telegram_KE_33771_n1_29SLCSHTpaQxA0wZ",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "176542475ee72fcb1f1274ec3a164997b6e62e384aca6c0c5db5a20c8bea6cbf",
+      "report_id": "20240110T043846Z_telegram_KE_33771_n1_4hCaOF9ewMNPNLbk",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "d9b26d78d901a073ee31b2a7c7686ad6327ca3193813a57e3cc3bb17c5917a92",
+      "report_id": "20240502T095051Z_telegram_KE_37061_n1_mWowNq5oyeJo0YKC",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "102b097be56a72e99c8af9cf57b97b6ac35e4d4e9425dec775a91d8a31b55d01",
+      "report_id": "20230810T165659Z_telegram_KE_33771_n1_eT6aAzBq1K6RgTAN",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "f28a1e623d98e21d0c3a701412ef07215bb31e74d6c936daa6f4278209846f6f",
+      "report_id": "20240728T080036Z_telegram_KE_33771_n1_Gf6nNg96pWUmGSYf",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "b411a88369df6af46cc423f9e63c926044f47c7c303604620f231711504e1a86",
+      "report_id": "20230809T095512Z_telegram_KE_33771_n1_4OIE76E00Hm17y23",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "ee3b1f4925960ea9c9b28b1e2dc77eab5bf490927ed2a8bbcc68549fb4fb450b",
+      "report_id": "20241231T095051Z_telegram_KE_37061_n1_fagMk93X9XSAM2mG",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "2f11d3d15fd8a70dc009557048862d3a11a30f58b6f148aad080aea9d9c2dd1f",
+      "report_id": "20240717T120311Z_telegram_KE_33771_n1_nVcCNRaLao8QhSW9",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "63df018fbcbb8870b0e6dd60c2643c703a1e76f9db4cec1ab46c97ff96238973",
+      "report_id": "20250120T064149Z_telegram_KE_328977_n1_LmxQYFKtorHUKTmb",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "b14a03ba7645b8f83222f9a40788892092385e23a65fc1e1efdb356e3213739e",
+      "report_id": "20240628T191430Z_telegram_KE_33771_n1_IqJ2xEfD5GooohGO",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "33840ef382b6137af1aeb90775c6f62dcd880b90e79f3f2dab30ea3c83c86caa",
+      "report_id": "20241112T210441Z_telegram_KE_33771_n1_16MorxGFrnw0JgRP",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "08d26b5d9af0b001c9f37cf7f6a34dcecc0fd8c10ecec80083ddee7a0c570e6e",
+      "report_id": "20240725T201630Z_telegram_KE_329211_n1_SpoYXU6JdreUyJbO",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "f252245c7586f3fb1d9a560053b41f8659284c7abc965d00e7892045da2dce54",
+      "report_id": "20231113T084854Z_telegram_KE_12455_n1_pq8tC14bTxLPppg6",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "4375ed93f058960eaa7202910353f9972af41c032d1f412bfc0e489239701192",
+      "report_id": "20241116T112301Z_telegram_KE_33771_n1_QOYMyZXB7wifm8QF",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "1e80b39a5346310e754317199f552eafb401666c8a32991b233954091619f4c6",
+      "report_id": "20240704T124505Z_telegram_KE_15808_n1_Gtx4UupqcCAisYVi",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "8136531d7f53f0aa4a7bbbdaac41880ebf0fe01b3798f56a4da196a9ae590c25",
+      "report_id": "20241120T072226Z_telegram_KE_33771_n1_gADzq3hMVu1oNGiS",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "3260111586b78e396704fa9decb3fa7d105874b4958456c2f907cdfebc707fe0",
+      "report_id": "20241110T124553Z_telegram_KE_33771_n1_DE6RSruienOwzR3b",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "0569be8f3266004de276d8568745741dd660e888718d0154feabf31464014522",
+      "report_id": "20241123T072240Z_telegram_KE_33771_n1_DInBpbU3eRWSHQ5n",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "19f4c63222af51e550d12aeb77a9ce4c36dbf3ae45c0ee38fdb07d2049f2d195",
+      "report_id": "20241127T065100Z_telegram_KE_37061_n1_JQ75rgyuqii64oSU",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "10ec83366e13c8674590e77b99debc3903341ef89d4c35ffe48f9020e79176b2",
+      "report_id": "20240912T045100Z_telegram_KE_37061_n1_oTyKoYSe9dWslzwD",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "f34e566a2387b9d2de7a033473bb15cf8b597a849beb4343465e8b98e8fbc021",
+      "report_id": "20250617T130036Z_telegram_KE_12455_n1_48K1TgjQirJ89CtK",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "f1f75a75e0ab61c3db3e249be3bd8d3c57f31c78a5fdcb7315f2a6f454b2896d",
+      "report_id": "20241118T041248Z_telegram_KE_33771_n1_gJpSqlIn8Cy2lOfX",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "8fc0be4ce1e7805ceccb98e4bd241f60d3cfaf6854791d54a97691aa373f83e3",
+      "report_id": "20231124T184409Z_telegram_KE_12455_n1_4GOmqcfHh9pPpmki",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "76ecc74147098d67a11276c71bd67dae1e4490cab45af3a6d2e419c639e18898",
+      "report_id": "20241115T162916Z_telegram_KE_37061_n1_UuHFKdYBdnLwy7Th",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "6340e491604e605ba919ac11b396469f359ce935997d20935b25fce1c64fde3c",
+      "report_id": "20241122T175051Z_telegram_KE_37061_n1_boRViIsLmy8hj8nH",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "a4b93d835505534bb7377dcfb85e71d8c37738771fb2b4297de158c5feb5f39f",
+      "report_id": "20250213T052129Z_telegram_KE_37061_n1_NFvV9Y3dSuK7ytKk",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "telegram",
+      "measurement_id": "f607744fd146a819fe3a06e2329eeef6a6460229efb2dc7a9180c417189ab983",
+      "report_id": "20241111T214458Z_telegram_KE_33771_n1_3qECxhtYkOwY2xFZ",
+      "input": null,
+      "clio_verdict": "ANOMALOUS",
+      "ooni_anomaly": true,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "ANOMALOUS",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "e17fa680d05a14a1b6a2ac290fb49c4f3bc05cd7b3a9a26b62bc8bd3ade4fc63",
+      "report_id": "20240902T173747Z_psiphon_KE_36866_n1_fzc4j4YgaKrG3go5",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "d21d26a4a91978399c76da510e1a1fd86612a043da71e45de8001f8bcd8a06ba",
+      "report_id": "20241004T155829Z_psiphon_KE_37061_n1_wHvU5BKBXS8k6Fmq",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "932913459400ec19413be026c0c69fb6301b404b49c4007ac62e35edb3461950",
+      "report_id": "20231016T033752Z_psiphon_KE_33771_n1_scwYuT1BNwUBa0pG",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "72fab4e745b3ac40028dccaadc8792c32e133ef5e0ce86aa57ebfba4400c01ff",
+      "report_id": "20250225T155039Z_psiphon_KE_37061_n1_5NTHooJeMEo97gBW",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "08e8feca0c789e8e3d54f8d52ce2b9ab9fe4d68cbb2a413c0cea589d3023c01d",
+      "report_id": "20250625T101201Z_psiphon_KE_15399_n1_HoSXpbmaRToMcUr4",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "be1a1005af5e08adefa61192f0daef4b8cbb80bbfbc84dd25ed69f20169444c5",
+      "report_id": "20240909T050919Z_psiphon_KE_33771_n1_FKm9OTi66aaUQwzz",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "8149c084abcc1eddaed3ddeb916d0a942346f777a8c386c27d3a1a53b8a372db",
+      "report_id": "20240403T222225Z_psiphon_KE_329014_n1_tJ3DSUabWYJrOAyG",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "4921f7cd9b6de6f81e9558c3407c2d4e71db8bea899b9a4ccdf74d05d3968740",
+      "report_id": "20241015T125113Z_psiphon_KE_37061_n1_udxvrqDpjbmYPo9J",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "356110f39ea3872249b6ca809d070261d315c27ba4f137876497408d070a656e",
+      "report_id": "20240614T093301Z_psiphon_KE_12455_n1_sKsfugW6fViHj0yb",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "4b590c396313ade0a58940e73944f04073c277f2f4ad04102f18f05105607698",
+      "report_id": "20241017T170440Z_psiphon_KE_328856_n1_zIed5wlOPYpW8maS",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "6e65abbd8add345538989423985d4e494beb646a4f6f664c71c918761f04aa16",
+      "report_id": "20250627T085936Z_psiphon_KE_15399_n1_S4iePE2UM8ojLcQI",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "42ae3f48f38df0e09b56b21d65a9e9616472164ec25f1e7b43f8e2fe65474701",
+      "report_id": "20231206T171006Z_psiphon_KE_30844_n1_HyOsSljpmZ573l4f",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "9d5ee2f6f9f44e45fb3e9599bbc5aac79ab52ac1b867677d71df5e7e7ad17a90",
+      "report_id": "20241102T032137Z_psiphon_KE_36866_n1_DJOYeUCDoqEFmdXV",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "dc658883cf353224d5cd79f2a85ae060eb6522c6dcef0caf23fd69892663a39f",
+      "report_id": "20250114T122418Z_psiphon_KE_33771_n1_STpkwRLYdo9KEtHv",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "0368ddb983759df90459ce642942941b0487a6dfe23afe84cadae07cb8959ae1",
+      "report_id": "20241022T220041Z_psiphon_KE_37061_n1_tILNCXLx579qrRTD",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "96fc2c7f92919663693e2e54b8edfa51288fe29b2c3b569949d7983bf32fa339",
+      "report_id": "20250217T135504Z_psiphon_KE_37061_n1_vrqofEpmpibiLDCA",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "24ba1e337d6d087da83d87a6d04a1afe57e95565d36e91912c49c1441301122e",
+      "report_id": "20230814T034652Z_psiphon_KE_33771_n1_wedxcNweEtN9WOtX",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "84a3cd40e4b26817ed9c4061965d9363fb6c8d7af7cf0f26b238658c1c9fee79",
+      "report_id": "20231225T182734Z_psiphon_KE_33771_n1_QdRS4oK4SGzWxVEi",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "8ad2ec9cd82ef6fc62678fa544b1984136c40a77f9d411ed3792b7c4b0e2c902",
+      "report_id": "20240725T103739Z_psiphon_KE_37061_n1_XweZ57jUk9uNKp5U",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "f4682962fc882d1cda7849fca259d251decf5c0f01f8192bb3fea2c968037679",
+      "report_id": "20240916T170058Z_psiphon_KE_14593_n1_AsHjXOS3NcUyrPhK",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "b3d78fc700f7d18f103f647abd6b841fc569ba6da2d9bbc637d15aff9fb18f5a",
+      "report_id": "20250324T005115Z_psiphon_KE_37061_n1_ZURBKuqgcGjfQzIW",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "f341b3ebc8c5b4147404b84f04b0889cc9a28ffbe132ed77a3dfebe405fdff2e",
+      "report_id": "20231109T083255Z_psiphon_KE_15399_n1_GMRxCfo7izyntvvQ",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "b4a686e19f4f00065824c4a36268a5c3355bff2710e22fd46582926a27252fa4",
+      "report_id": "20240915T014936Z_psiphon_KE_33771_n1_k7XG2o6j4CVNiMCp",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "3353a3d0e4fafd7a0ce534e816d807f26c3ed9697b6df8fe34f499b1e1f54fa4",
+      "report_id": "20250410T135113Z_psiphon_KE_37061_n1_N3oHjhT5ZvBanCKF",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "e922e90cdf40494ca45f98174dcc8ec96fe60a796ca0ffd4d0f96c9654a2820c",
+      "report_id": "20241019T095931Z_psiphon_KE_37061_n1_Ugo0WJJV2UTxaKbl",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "f5e79528dd1848b7f9de0334290a286d5ea8947b23c47b4dc96c9331d7b62951",
+      "report_id": "20241120T092154Z_psiphon_KE_33771_n1_zwiFbZSbjMpkXSAx",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "b1374f6ed29ddfbad4b1c469bb154587c62206e905d7ac43756c1976711ca8f6",
+      "report_id": "20240621T003532Z_psiphon_KE_33771_n1_mqqNLFEePHb47DBZ",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "cdecc37d23adc5fc6d8e4d99a5353df43d652a4838efa33f466df5a04bca0709",
+      "report_id": "20250515T201312Z_psiphon_KE_328858_n1_G2HXrxQMdrHPdQWz",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "122d1c56311984c2ada11361b0f15d2e4e6ea45ed97e9f5e87593a6428462b90",
+      "report_id": "20240912T213627Z_psiphon_KE_329205_n1_o1xoVpMrcFpo5HWu",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "b3aa29c1a5d462f52cb33fd3a9cafe7f659c5e7de352af916a05dec4fbb75d95",
+      "report_id": "20230821T014119Z_psiphon_KE_33771_n1_ngoE3jalvNBby0oZ",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "562feafd828158c4cfc4868e5f3e51a866efc183baf0de9f21e2407f51b4414f",
+      "report_id": "20241106T101300Z_psiphon_KE_33771_n1_YbLmgiPnA3oFF7ca",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "8acdd28d0d0d1522c5be4b6718d32000503bb56c7337d27d2f38abe146340627",
+      "report_id": "20230921T115915Z_psiphon_KE_33771_n1_77oVJJqHO1Vtxoz2",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "f55be47b8960e61aabdab399a043f1a22fa33dfba2d2645b05c8b4faed4eac2b",
+      "report_id": "20250408T034454Z_psiphon_KE_37061_n1_a8oCfw37wRJ1bk8i",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "8d16f8b7dda25d65df71a61fe911abc6e402b4443ce4513c9236414d182e4e63",
+      "report_id": "20230807T024211Z_psiphon_KE_33771_n1_CIruMwECTpZZYDyH",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "psiphon",
+      "measurement_id": "8af6391a780a8b7a434454136bd79da9ba438165727a7c7e47e569f53b13e4c9",
+      "report_id": "20230920T143653Z_psiphon_KE_328490_n1_n5EpI8etZFEYGDPI",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T10:16:32Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    },
+    {
+      "test_name": "signal",
+      "measurement_id": "23c3631a7ddab6e287c79e6d68681239d2a07c1a668adda948f6816872f2d05c",
+      "report_id": "20230601T223003Z_signal_KE_33771_n1_Vo2fbtm5NYbKwqQD",
+      "input": null,
+      "clio_verdict": "OK",
+      "ooni_anomaly": false,
+      "ooni_confirmed": false,
+      "ooni_failure": false,
+      "recorded_at": "2026-08-30T12:20:00Z",
+      "clio_verdict_now": "OK",
+      "clio_verdict_refreshed_at": "2026-08-30T13:08:42.836283+00:00",
+      "clio_verdict_source": {
+        "verdict_table_modified": "2026-08-22T11:25:05.382000+00:00"
+      }
+    }
+  ]
 }

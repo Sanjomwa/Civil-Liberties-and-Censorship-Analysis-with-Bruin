@@ -22,4 +22,38 @@
 #     hostname_or_target: "*"
 #     td_ref: TD-00
 #     reason: "example only -- delete once a real entry is added"
-entries: []
+
+entries:
+  # TD-125 (2026-08-30): every psiphon measurement CLIO classifies FAILED
+  # has OONI's own live API returning anomaly=true/confirmed=false/
+  # failure=false for the same measurement -- which this harness's own
+  # verdict precedence (config/verdict_mapping.yml, CONFIRMED > FAILED >
+  # ANOMALOUS > OK) resolves to ANOMALOUS, not FAILED. Systematic, not
+  # noise: reproduced identically across two independent live runs
+  # (93/103 candidates, then 93/93 against the full seeded panel).
+  # hostname_or_target is the literal value `null`, not the "*" wildcard --
+  # psiphon is a single-input OONI test (its `input` column is always
+  # null, confirmed live), so `null` is the exact, only value this
+  # signature can ever carry for psiphon, not a broadening beyond what's
+  # actually possible. Deliberately NOT fixed as of 2026-08-30 -- the
+  # project owner's decision is to document and allowlist this specific,
+  # understood divergence, not investigate the underlying psiphon
+  # classification as a bug this session. Prune this entry once TD-125 is
+  # resolved and this signature no longer appears live (same discipline as
+  # every other entry here and in staleness_allowlist.json).
+  - test_name: psiphon
+    clio_verdict: FAILED
+    ooni_anomaly: true
+    ooni_confirmed: false
+    ooni_failure: false
+    hostname_or_target: null
+    td_ref: TD-125
+    reason: >-
+      Systematic, reproduced-twice divergence: CLIO's psiphon FAILED verdicts
+      (tunnel-establishment failures, e.g. generic_timeout_error,
+      "clientlib: tunnel establishment timeout", various socks-connect
+      failures) all correspond to OONI's own live scorer returning
+      anomaly=true/failure=false, which resolves to ANOMALOUS under this
+      harness's own precedence -- not a false positive, a real, understood,
+      deliberately-deferred classification-boundary question. Documented,
+      not silently ignored.

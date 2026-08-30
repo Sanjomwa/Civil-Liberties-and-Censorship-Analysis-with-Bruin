@@ -283,7 +283,13 @@ def check_ooni_verdict_reminder(names: set[str]) -> None:
         "Consider dispatching ooni-agreement-check.yml (or running "
         "Bruin/scripts/agreement_check/ooni_agreement_check.py locally) to "
         "confirm classifications still agree with OONI's own live data "
-        "(TD-100/ADR-0013).",
+        "(TD-100/ADR-0013). Also consider running --mode refresh-panel "
+        "(--all, or --test-type X to scope it) afterwards: this cascade may "
+        "have changed CLIO's own verdict for one or more of the 144 fixed "
+        "panel entries, and check_panel()'s CLIO-side regression check only "
+        "trusts a panel entry that was refreshed at or after the verdict "
+        "table's last change -- an un-refreshed panel goes STALE/"
+        "INCONCLUSIVE after this cascade, not silently wrong (TD-124).",
         ", ".join(hits),
     )
 
