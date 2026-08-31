@@ -213,7 +213,11 @@ with tab_regime:
         name="Confidence",
     ))
     apply_layout(fig_conf, f"{protocol} Statistical Confidence")
-    fig_conf.update_layout(xaxis_title="Date", yaxis_title="Confidence")
+    fig_conf.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Confidence",
+        yaxis=dict(range=[0, 1]),
+    )
     st.plotly_chart(fig_conf, use_container_width=True)
 
     st.divider()

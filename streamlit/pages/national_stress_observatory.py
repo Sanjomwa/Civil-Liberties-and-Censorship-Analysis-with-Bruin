@@ -172,6 +172,7 @@ add_threshold_lines(
     values=[2.0, 4.0, 6.5],
     labels=["MODERATE", "ELEVATED", "SEVERE"],
     opacity=[0.4, 0.5, 0.6],
+    colors=[None, "#5B8DEF", "#2FA36B"],
 )
 
 st.plotly_chart(

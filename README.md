@@ -46,35 +46,27 @@ Every quantitative figure was independently re-verified against live BigQuery da
 
 ## Dashboard Showcase
 
+### Welcome / What CLIO Is
+
+![](screenshot-welcome.png)
+
+What CLIO is and isn't — an observatory fusing conflict-event data, internet-measurement data, and platform/legal takedown pressure into attributed, confidence-qualified findings, currently piloted in Kenya.
+
+---
+
 ### National Stress Observatory
 
 ![](screenshot-national-stress-observatory.png)
 
-Executive view of national digital-pressure movement, baseline divergence, suppression-window probability, and evidence quality across the Kenya observation window.
+Executive view of national pressure movement, driven primarily by ACLED conflict intensity with platform-pressure signals alongside it, banded against MODERATE/ELEVATED/SEVERE thresholds and cross-checked against protocol-escalation load.
 
 ---
 
-### Protocol Intelligence
+### Pressure Attribution
 
-![](screenshot-protocol-intelligence.png)
+![](screenshot-pressure-attribution.png)
 
-Protocol-level regime classification for DNS, HTTP, TCP, and TLS — stress heatmap, per-protocol regime evolution, and current ranking in one tab; observation-reliability composition and the per-app/per-protocol-layer blocking breakdown (Telegram vs. WhatsApp vs. Signal vs. Psiphon) in the other. Consolidates what were two separate, largely-duplicative pages (TD-16) into one, removing the duplication rather than just relocating it.
-
----
-
-### Protocol ↔ Repression Correlation Engine
-
-![](screenshot-protocol-repression-correlation-engine.png)
-
-Statistical alignment engine measuring whether protocol anomalies move with national repression-pressure indicators across rolling historical windows. Two tabs over the same underlying mart: **Protocol Drill-Down** follows one protocol's correlation over time; **Date Snapshot** follows every protocol on one specific date — useful for reconstructing what happened around a specific incident (TD-98: merged from the former, separate "Suppression Event Explorer" page — same data, two views, one honest weak-correlation disclosure instead of two).
-
----
-
-### ASN Behavioral Intelligence
-
-![](screenshot-asn-behavioral-intelligence.png)
-
-Network-level intelligence view ranking ASNs by blocking intensity, behavioral priority, evidence maturity, dominant protocol, and reliability of observed interference.
+Decomposes CLIO's core cross-source pressure composite into its named, sourced arithmetic drivers (ACLED conflict intensity, Google Transparency platform pressure) for any date, with OONI shown as independent same-day corroboration rather than a composite input — an attributed, citable answer to "why is this composite at this level right now." The National Stress Observatory's own headline reading is a separate, faster-moving index that also draws on OONI signal directly; it is not yet decomposed on this or any dedicated view — read it as an early-warning flag, not (yet) a component-by-component explanation.
 
 ---
 
@@ -86,19 +78,35 @@ Focused reconstruction of the Finance Bill 2024 period, connecting protocol beha
 
 ---
 
+### Protocol ↔ Repression Correlation Engine
+
+![](screenshot-protocol-repression-correlation-engine.png)
+
+The bridge between the political and technical evidence: tests whether protocol anomalies actually move with ACLED-derived repression pressure across rolling windows, and reconstructs every protocol's state on a chosen incident date.
+
+---
+
+### Protocol Intelligence
+
+![](screenshot-protocol-intelligence.png)
+
+Protocol-level regime classification for DNS, HTTP, TCP, and TLS — stress heatmap, per-protocol regime evolution, and current ranking in one tab; observation-reliability composition and the per-app/per-protocol-layer blocking breakdown (Telegram vs. WhatsApp vs. Signal vs. Psiphon) in the other. Consolidates what were two separate, largely-duplicative pages (TD-16) into one, removing the duplication rather than just relocating it.
+
+---
+
+### ASN Behavioral Intelligence
+
+![](screenshot-asn-behavioral-intelligence.png)
+
+Provider-level accountability view — which specific networks carried the observed interference, ranked by blocking intensity, behavioral priority, and evidence maturity.
+
+---
+
 ### Methodology & Statistical Guardrails
 
 ![](screenshot-methodology-statistical-guardrails.png)
 
 Methodology view documenting how sparse data, confidence weighting, variance checks, and rolling baselines constrain interpretation before signals enter intelligence outputs.
-
----
-
-### Pressure Attribution
-
-![](screenshot-pressure-attribution.png)
-
-Decomposes CLIO's core cross-source pressure composite into its named, sourced arithmetic drivers (ACLED conflict intensity, Google Transparency platform pressure) for any date, with OONI shown as independent same-day corroboration rather than a composite input — an attributed, citable answer to "why is this composite at this level right now." The National Stress Observatory's own headline reading is a separate, faster-moving index that also draws on OONI signal directly; it is not yet decomposed on this or any dedicated view — read it as an early-warning flag, not (yet) a component-by-component explanation.
 
 ---
 
