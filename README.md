@@ -48,65 +48,58 @@ Every quantitative figure was independently re-verified against live BigQuery da
 
 ### Welcome / What CLIO Is
 
-![](screenshot-welcome.png)
+![](docs/images/screenshot-welcome.png)
 
 What CLIO is and isn't — an observatory fusing conflict-event data, internet-measurement data, and platform/legal takedown pressure into attributed, confidence-qualified findings, currently piloted in Kenya.
 
 ---
 
-### National Stress Observatory
-
-![](screenshot-national-stress-observatory.png)
-
-Executive view of national pressure movement, driven primarily by ACLED conflict intensity with platform-pressure signals alongside it, banded against MODERATE/ELEVATED/SEVERE thresholds and cross-checked against protocol-escalation load.
-
----
-
-### Pressure Attribution
-
-![](screenshot-pressure-attribution.png)
-
-Decomposes CLIO's core cross-source pressure composite into its named, sourced arithmetic drivers (ACLED conflict intensity, Google Transparency platform pressure) for any date, with OONI shown as independent same-day corroboration rather than a composite input — an attributed, citable answer to "why is this composite at this level right now." The National Stress Observatory's own headline reading is a separate, faster-moving index that also draws on OONI signal directly; it is not yet decomposed on this or any dedicated view — read it as an early-warning flag, not (yet) a component-by-component explanation.
-
----
-
 ### Finance Bill 2024 Incident Report
 
-![](screenshot-finance-bill-2024-incident-report.png)
+![](docs/images/screenshot-finance-bill-2024-incident-report.png)
 
 Focused reconstruction of the Finance Bill 2024 period, connecting protocol behavior, national pressure signals, and major-provider activity during a known political stress window.
 
----
+<details>
+<summary>Six more dashboard pages</summary>
+
+### National Stress Observatory
+
+![](docs/images/screenshot-national-stress-observatory.png)
+
+Executive view of national pressure movement, driven primarily by ACLED conflict intensity with platform-pressure signals alongside it, banded against MODERATE/ELEVATED/SEVERE thresholds and cross-checked against protocol-escalation load.
+
+### Pressure Attribution
+
+![](docs/images/screenshot-pressure-attribution.png)
+
+Decomposes CLIO's core cross-source pressure composite into its named, sourced arithmetic drivers (ACLED conflict intensity, Google Transparency platform pressure) for any date, with OONI shown as independent same-day corroboration rather than a composite input — an attributed, citable answer to "why is this composite at this level right now." The National Stress Observatory's own headline reading is a separate, faster-moving index that also draws on OONI signal directly; it is not yet decomposed on this or any dedicated view — read it as an early-warning flag, not (yet) a component-by-component explanation.
 
 ### Protocol ↔ Repression Correlation Engine
 
-![](screenshot-protocol-repression-correlation-engine.png)
+![](docs/images/screenshot-protocol-repression-correlation-engine.png)
 
 The bridge between the political and technical evidence: tests whether protocol anomalies actually move with ACLED-derived repression pressure across rolling windows, and reconstructs every protocol's state on a chosen incident date.
 
----
-
 ### Protocol Intelligence
 
-![](screenshot-protocol-intelligence.png)
+![](docs/images/screenshot-protocol-intelligence.png)
 
 Protocol-level regime classification for DNS, HTTP, TCP, and TLS — stress heatmap, per-protocol regime evolution, and current ranking in one tab; observation-reliability composition and the per-app/per-protocol-layer blocking breakdown (Telegram vs. WhatsApp vs. Signal vs. Psiphon) in the other. Consolidates what were two separate, largely-duplicative pages (TD-16) into one, removing the duplication rather than just relocating it.
 
----
-
 ### ASN Behavioral Intelligence
 
-![](screenshot-asn-behavioral-intelligence.png)
+![](docs/images/screenshot-asn-behavioral-intelligence.png)
 
 Provider-level accountability view — which specific networks carried the observed interference, ranked by blocking intensity, behavioral priority, and evidence maturity.
 
----
-
 ### Methodology & Statistical Guardrails
 
-![](screenshot-methodology-statistical-guardrails.png)
+![](docs/images/screenshot-methodology-statistical-guardrails.png)
 
 Methodology view documenting how sparse data, confidence weighting, variance checks, and rolling baselines constrain interpretation before signals enter intelligence outputs.
+
+</details>
 
 ---
 
@@ -150,7 +143,7 @@ flowchart LR
     Sources["OONI, ACLED, Google Transparency, Lumen-style data"]
     Ingest["Python ingestion and Parquet normalization"]
     Warehouse["BigQuery staging, facts, dimensions, features"]
-    Intelligence["Protocol regimes, lag relationships, pressure correlation"]
+    Intelligence["ACLED conflict-regime classification, protocol regimes, lag relationships, pressure correlation"]
     Reporting["Dashboard-facing reporting marts"]
     Contracts["Streamlit query services and dataframe contracts"]
     Dashboard["Streamlit intelligence observatory"]
@@ -196,13 +189,18 @@ Generated from the repository's tracked files (`git ls-files`), not the local wo
 ```text
 .
 |-- Bruin/
+|   |-- README.md
 |   |-- pipeline.yml
 |   |-- requirements.txt
 |   |-- config/
 |   |   `-- observatory.yml
 |   |-- scripts/
+|   |   |-- agreement_check/          # OONI classification agreement-check panel (ADR-0013,
+|   |   |                             # workflow_dispatch only -- cron permanently disabled)
 |   |   |-- country_literal_check/    # CI guard against hardcoded country literals
 |   |   |-- historical_initializer/   # ACLED regime engine backfill driver
+|   |   |-- safe_run/                 # Cascade-safe materialize wrapper (ADR-0012) -- the
+|   |   |                             # only sanctioned way to run `bruin run` in this repo
 |   |   |-- staleness_check/          # Materialization-staleness CI guard
 |   |   `-- steady_state/             # Resolves and runs the single next unprocessed
 |   |                                 # ACLED regime week (TD-38) -- never bare `bruin run`
@@ -217,31 +215,72 @@ Generated from the repository's tracked files (`git ls-files`), not the local wo
 |       |-- features/        # Model-ready protocol and pressure features
 |       |-- intelligence/    # Regime classification and relationship inference
 |       `-- reporting/       # Dashboard-facing marts, incl. pressure-attribution
-|-- .env.example             # Portable environment variable template
+|-- .devcontainer/
+|   |-- devcontainer.json
+|   `-- setup-gcp-tooling.sh   # Installs gcloud/bq/bruin tooling on every Codespace rebuild
+|-- .env.example                # Portable environment variable template
 |-- .github/
 |   `-- workflows/
 |       |-- lint.yml                    # CI lint scaffolding
 |       |-- tests.yml                   # CI test scaffolding
 |       |-- gcp-auth.yml                # Workload Identity Federation auth check
 |       |-- staleness-check.yml         # Materialization-staleness CI job
-|       `-- country-literal-check.yml   # Hardcoded-country-literal CI guard
+|       |-- country-literal-check.yml   # Hardcoded-country-literal CI guard
+|       `-- ooni-agreement-check.yml    # OONI agreement-check panel (ADR-0013,
+|                                       # workflow_dispatch only -- cron permanently disabled)
+|-- .vscode/
+|   |-- mcp.json
+|   `-- settings.json
 |-- docs/
 |   |-- 02-architecture/     # ADRs, architecture assessment, decision log, TD inventory,
 |   |   |                    # data-modelling.md, data_sources.md, erd-lineage.md
 |   |   `-- adr/             # Accepted architecture decision records
-|   `-- 03-development/      # Coding standards, testing strategy, documentation standards
+|   |-- 03-development/      # Coding standards, testing strategy, documentation standards
+|   `-- images/              # Dashboard screenshots referenced by this README's
+|       |                    # Dashboard Showcase section (moved from repo root)
+|       |-- screenshot-asn-behavioral-intelligence.png
+|       |-- screenshot-finance-bill-2024-incident-report.png
+|       |-- screenshot-methodology-statistical-guardrails.png
+|       |-- screenshot-national-stress-observatory.png
+|       |-- screenshot-pressure-attribution.png
+|       |-- screenshot-protocol-intelligence.png
+|       |-- screenshot-protocol-repression-correlation-engine.png
+|       `-- screenshot-welcome.png
 |-- Archive/                 # Superseded docs, kept (not deleted) with an explanation
 |   `-- README.md            # of what each archived file was and what replaced it
 |-- infra/
 |   |-- main.tf
 |   |-- provider.tf
 |   |-- variables.tf
+|   |-- terraform.tfvars
 |   |-- setup-gcp.sh
 |   |-- verify-gcp.sh
 |   `-- modules/
 |       |-- bigquery/
 |       |-- gcs/
 |       `-- iam/
+|-- llm_report_writer/       # LLM-assisted narrative report drafting + verification
+|   |                        # over CLIO's own already-computed marts (ADR-0010) --
+|   |                        # never a new-fact source, grounded/completeness-checked
+|   |-- report_writer_openai.py
+|   |-- template_writer.py
+|   |-- deterministic_analysis.py
+|   |-- claim_check.py
+|   |-- causal_language_check.py
+|   |-- coherence_check.py
+|   |-- completeness_check.py
+|   |-- style_lint.py
+|   |-- verify_report.py
+|   |-- bigquery_lookup.py
+|   |-- run_report.py
+|   |-- run_baseline_comparison.py
+|   |-- run_live_windows.py
+|   |-- requirements.txt
+|   |-- README.md
+|   |-- fixtures/
+|   `-- tests/
+|-- logs/
+|   `-- query_log.sql        # Tracked but empty; TD-32 recommends deletion (not yet done)
 |-- scripts/
 |   |-- download_ooni.ps1
 |   |-- local_ingest_ooni.py
@@ -251,6 +290,8 @@ Generated from the repository's tracked files (`git ls-files`), not the local wo
 |   |-- app.py                # Thin st.navigation entrypoint - pages own their
 |   |   |                     # title/icon via st.Page(), not filename parsing
 |   |-- requirements.txt
+|   |-- .streamlit/
+|   |   `-- config.toml
 |   |-- pages/                # Welcome + 7 pages: National Stress Observatory,
 |   |   |                     # Protocol Intelligence (consolidated, TD-16),
 |   |   |                     # Protocol Repression Correlation Engine (two tabs,
@@ -267,14 +308,12 @@ Generated from the repository's tracked files (`git ls-files`), not the local wo
 |   |   |-- constants.py
 |   |   |-- contracts.py
 |   |   |-- filters.py
-|   |   |-- layout.py
 |   |   |-- state.py
 |   |   `-- theme.py
 |   |-- components/
 |   |   |-- charts.py
 |   |   |-- kpis.py
 |   |   |-- status.py
-|   |   |-- tables.py
 |   |   `-- trust.py          # ACLED/OONI attribution footer
 |   `-- assets/
 |       |-- annotations/
@@ -282,16 +321,31 @@ Generated from the repository's tracked files (`git ls-files`), not the local wo
 |           `-- thresholds.yml
 |-- tests/
 |   |-- fixtures/
-|   |   `-- acled_regimes_golden/            # Golden-file fixtures for regime classification
-|   |                                        # (Finance Bill 2024, Jan-Feb 2008)
+|   |   |-- acled_regimes_golden/                                  # Finance Bill 2024, Jan-Feb 2008
+|   |   |-- ooni_dnscheck_bootstrap_classification/
+|   |   |-- ooni_signal_probe_version_discard/
+|   |   |-- ooni_weekly_golden/
+|   |   |-- ooni_whatsapp_endpoints_blocked_count_removed/
+|   |   |-- ooni_whatsapp_registration_accessible_classification/
+|   |   `-- ooni_whatsapp_web_accessible_classification/
 |   |-- test_contracts.py                    # Dashboard contract validation tests
 |   |-- test_acled_pressure_regimes_golden.py
+|   |-- test_ooni_confirmed_guard.py
 |   |-- test_ooni_dns_bogon_classification.py
 |   |-- test_ooni_dns_canary_classification.py
-|   |-- test_ooni_tls_handshake_success_fix.py
+|   |-- test_ooni_dnscheck_bootstrap_failed_classification.py
+|   |-- test_ooni_signal_probe_version_discard.py
 |   |-- test_ooni_tls_failure_evidence_tiering.py
-|   `-- test_ooni_tls_root_ca_exclusion.py
+|   |-- test_ooni_tls_handshake_success_fix.py
+|   |-- test_ooni_tls_root_ca_exclusion.py
+|   |-- test_ooni_weekly_aggregation_golden.py
+|   |-- test_ooni_whatsapp_endpoints_blocked_count_removed.py
+|   |-- test_ooni_whatsapp_registration_accessible_classification.py
+|   `-- test_ooni_whatsapp_web_accessible_classification.py
+|-- CLAUDE.md
+|-- LICENSE
 |-- pyproject.toml
+|-- runtime.txt
 |-- uv.lock
 `-- README.md
 ```
@@ -489,6 +543,8 @@ Expected NumPy version:
 
 Four sources feed the pipeline today — OONI, ACLED, Google Transparency Report, and a currently-synthetic, benched Lumen branch — through seven layers (raw → staging → intermediate → features → intelligence → marts → reporting). Full detail lives in three dedicated documents rather than duplicated here, so this section doesn't become a second, silently-drifting copy of them:
 
+CLIO also includes a narrow, disclosed AI-assisted reporting layer, `llm_report_writer/` (ADR-0010): it drafts narrative report text only from CLIO's own already-computed, verified marts — never a new fact sourced from outside CLIO — with every generated claim independently re-checked against the exact mart row it cites before the report is allowed to stand, plus a completeness check that a report citing synthetic-derived data (e.g. Lumen) must include the required disclosure. It runs standalone, outside Bruin's DAG and outside the live Streamlit dashboard, by deliberate design (LLM calls are nondeterministic and billed per-invocation, so it is never re-invoked by a pipeline rebuild).
+
 - **[`docs/02-architecture/data_sources.md`](docs/02-architecture/data_sources.md)** — every source's real grain, licensing status, and ingestion path, plus which additional sources (STOP/Access Now, CPJ, IODA, Freedom House) are recommended but not yet ingested.
 - **[`docs/02-architecture/data-modelling.md`](docs/02-architecture/data-modelling.md)** — the live dimension/fact/reporting schema, with a Mermaid ER diagram generated from the actual BigQuery schema, and a documented gotcha (two different `composite_pressure_score` formulas share a column name across two tables — see that doc before assuming which one you're reading).
 - **[`docs/02-architecture/erd-lineage.md`](docs/02-architecture/erd-lineage.md)** — the full pipeline dependency graph per source, generated from the live Bruin DAG, including the two guardrails that keep it from silently corrupting (the ACLED regime engine's execution-order precondition, and the materialization-staleness CI check).
@@ -551,7 +607,7 @@ ruff check .
 
 Run commands and asset names tell you validation *exists*; they don't tell you what's actually been checked or what came back. This section states that plainly, with real numbers, not vague claims — full detail lives in `docs/02-architecture/technical-debt-inventory.md` and `docs/02-architecture/decision-log.md`; this is the top-line summary, not a duplicate of either.
 
-**ACLED regime classifier — golden-file regression tests.** `tests/test_acled_pressure_regimes_golden.py` asserts the ACLED "Path A" regime classifier's output against recorded fixtures for two real historical windows: the Finance Bill 2024 protests (2024-05-11 to 2024-07-13) and the Jan–Feb 2008 post-election violence. This is a drift check against already-validated, materialized BigQuery output, gated behind an opt-in `RUN_BIGQUERY_TESTS=1` environment variable — without it, both tests skip cleanly (2 skipped, offline, well under 1 second); re-run live for this section (2026-08-02) with the flag set and real BigQuery access, both windows pass (2 passed, ~12 seconds). The repository's full test suite (`pytest -q`, also re-run live for this section) currently reports 16 passed, 15 skipped — the skips are exclusively the BigQuery-gated tests across several files, not failures.
+**ACLED regime classifier — golden-file regression tests.** `tests/test_acled_pressure_regimes_golden.py` asserts the ACLED "Path A" regime classifier's output against recorded fixtures for two real historical windows: the Finance Bill 2024 protests (2024-05-11 to 2024-07-13) and the Jan–Feb 2008 post-election violence. This is a drift check against already-validated, materialized BigQuery output, gated behind an opt-in `RUN_BIGQUERY_TESTS=1` environment variable — without it, both tests skip cleanly (2 skipped, offline, well under 1 second); re-run live for this section (2026-08-31) with the flag set and real BigQuery access, both windows pass (2 passed, ~11 seconds). The repository's full test suite (`pytest -q`, also re-run live for this section) currently reports 39 passed, 39 skipped — the skips are exclusively the BigQuery-gated tests across several files, not failures (grown from 16 passed/15 skipped since this section was last written, as new OONI classification test files landed).
 
 **A disclosed, self-found bug: 91.5% of the TLS observation table was misclassified for months.** `stg.ooni_tls_observations.handshake_success` was structurally `NULL` for 100% of 422,487 rows across every ingested app (Signal, WhatsApp, Telegram, Psiphon) — the extraction read a JSONPath (`$.status.success`) that belongs to a different OONI data shape than TLS handshake objects actually have. The consequence: 386,617 of 422,487 rows (91.5%) that should have read `OK` (a genuinely successful handshake) instead fell through to `UNKNOWN`. Found and fixed on this project's own initiative — not flagged by an outside party — and disclosed here rather than left to be found later in the commit history. Full before/after numbers per app, and the downstream cascade this fix was traced through, are in `technical-debt-inventory.md`'s TD-72 entry.
 
@@ -633,7 +689,7 @@ Findings that draw on ACLED or OONI data should also carry each source's own req
 ## Attribution and License
 
 Maintained by Samwel Njogu  
-X: [@sam_njogu9](https://x.com/sam_njogu9)
+LinkedIn: [www.linkedin.com/in/samwel-mwaniki-6482563b2](https://www.linkedin.com/in/samwel-mwaniki-6482563b2)
 
 Built as a civil-liberties observability platform — currently piloted in Kenya — using Bruin, BigQuery, Streamlit, Terraform, Python, OONI, ACLED, and Google Transparency Report data. A Lumen-derived legal-pressure signal exists in the pipeline but is currently synthetic and benched from all live output (see "Data Licensing & Attribution" above).
 
