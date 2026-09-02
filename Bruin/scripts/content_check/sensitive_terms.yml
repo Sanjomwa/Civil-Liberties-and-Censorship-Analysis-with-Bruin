@@ -1,0 +1,46 @@
+# TD-132: denylist for check_public_docs.py.
+#
+# This file is TRACKED and PUBLIC. Never put a real name, real email fragment,
+# real quoted private reasoning, or any other actual sensitive string in this
+# file — anyone cloning this repository can read it. Doing so would leak
+# exactly the content this check exists to keep out of CLAUDE.md and
+# decision-log.md.
+#
+# Real, specific sensitive strings belong in the gitignored companion file
+# next to this one, sensitive_terms.local.yml (confirmed via `git check-ignore
+# -v` before it was created — see .gitignore's 2026-09-02 entry). That file is
+# NOT checked into git and will not exist on a fresh clone or in CI; this file
+# is the fallback that still exists everywhere.
+#
+# Maintained BY HAND. Nothing regenerates this list automatically. When a new
+# category of sensitive content is redacted from CLAUDE.md or decision-log.md
+# in the future (see docs/02-architecture/decision-log.md's 2026-07-12 entry
+# for the precedent this file is built to prevent recurring), add the general
+# shape of it here, and add the actual string to sensitive_terms.local.yml by
+# hand — do not wait for someone else to do it.
+#
+# Matching: check_public_docs.py does a case-insensitive substring match of
+# each "term" below against every added line in the diff. This is a loud,
+# cheap tripwire, not a precision tool - expect false positives on ordinary
+# technical prose that happens to contain one of these words in an unrelated
+# sense. That is by design (see CLAUDE.md's override instructions).
+
+terms:
+  # Categories established by the 2026-07-12 redaction (docs/07-governance/
+  # decision-log-private-addendum.md) - the actual strings that triggered
+  # these categories live in sensitive_terms.local.yml, not here.
+  - "negotiating posture"
+  - "negotiating recommendation"
+  - "commercial-negotiating"
+  - "not published in this repository"
+  - "private addendum"
+  - "private companion"
+  - "correspondence detail"
+
+  # General categories flagged in the TD-132 relay prompt as a starting
+  # point - extend by hand as real cases are found, per the note above.
+  - "grant pricing"
+  - "funding strategy"
+  - "personal email"
+  - "phone number"
+  - "home address"
