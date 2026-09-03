@@ -8,24 +8,28 @@ work on CLIO. This is process, not product or architecture content.
 **When it's used:** onboarding, and any new asset, PR, or documentation
 change.
 
-## Files (planned)
+## Files
 
-- `CONTRIBUTING.md` — setup, branching strategy (trunk-based, short-lived
-  feature branches), review process, and the "determine ownership before
-  writing" rule generalized from documentation to code.
-- `testing-strategy.md` — what is tested today (`tests/test_contracts.py`
-  only, covering the Streamlit contract-validation helper) and, explicitly,
-  what is not (the classification/regime logic in the SQL intelligence
-  layer). Should define the golden-file regression test plan tied to known
-  historical incidents (e.g. the Finance Bill 2024 window) recommended in
-  `CLIO_Project_Zero_Review.docx` Section 6, item 8.
-- `documentation-standards.md` — the documentation policy from
-  `CLIO_Project_Zero_Review.docx` Section 7: every feature documents
-  rationale, implementation, tests, assumptions, limitations, and future
-  work; ADR template; experiment record template; retrospective template;
-  API-before-release rule; the Methodology Changelog (separate from the
-  general code changelog); and the Data/Metric Dictionary.
+- `coding-standards.md` — standards drawn from patterns already working well
+  in this codebase (e.g. the OONI evidence/interpretation separation, the
+  ACLED path A confidence split), not imported from a generic style guide.
+- `testing-strategy.md` — what is actually tested today and, explicitly,
+  what is not. Covers the real current contents of `tests/` (now well beyond
+  the original `test_contracts.py`-only baseline — see that file's own
+  "Current state" section for the live count) and the golden-file regression
+  approach tied to known historical incidents (e.g. the Finance Bill 2024
+  window).
+- `documentation-standards.md` — the documentation policy: every feature or
+  asset documents rationale, implementation, tests, assumptions,
+  limitations, and future work; the ADR template; and where the Bruin
+  `@bruin` YAML description block maps onto this policy.
+- `claude-code-environment.md` — environment setup and migration notes for
+  running Claude Code inside this project's GitHub Codespaces devcontainer,
+  companion to `coding-standards.md` and `implementation-roadmap.md`.
 
 ## Status
 
-Not yet populated.
+Populated. The list above reflects this folder's actual contents as of
+2026-09-03 (confirmed via direct directory listing); update it directly when
+a file is added, renamed, or removed rather than letting it drift back into
+a stale "planned" state.

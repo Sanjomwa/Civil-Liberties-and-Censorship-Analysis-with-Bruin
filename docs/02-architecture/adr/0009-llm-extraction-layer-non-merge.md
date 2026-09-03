@@ -1,6 +1,6 @@
 # ADR-0009: LLM Extraction Layer — Standalone, Disclosed, Non-Merge by Design
 
-Status: Accepted, implemented
+Status: Accepted, implemented; code deleted from the live repo 2026-08-03, superseded by `llm_report_writer/` (ADR-0010) — see "Amendment (2026-08-03)" below. **Corrected 2026-09-03: this Status line previously read only "Accepted, implemented" and did not reflect the amendment, even though the amendment section itself and `decision-log.md`'s ADR index already did.**
 Date: 2026-08-02
 
 ## Context
